@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import RoleRoute from './components/RoleRoute';
 
 import PacienteLayout from './pages/paciente/PacienteLayout';
 import PacienteHome from './pages/paciente/PacienteHome';
@@ -48,9 +50,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/home" element={<HomeRedirect />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
 
           {/* Paciente */}
-          <Route path="/paciente" element={<PacienteLayout />}>
+          <Route path="/paciente" element={<RoleRoute allowedRoles={['paciente']}><PacienteLayout /></RoleRoute>}>
             <Route index element={<Navigate to="/paciente/home" replace />} />
             <Route path="home" element={<PacienteHome />} />
             <Route path="anamnese" element={<PacienteAnamnese />} />
@@ -59,7 +62,7 @@ function App() {
           </Route>
 
           {/* Profissionais */}
-          <Route path="/profissional" element={<ProfissionalLayout />}>
+          <Route path="/profissional" element={<RoleRoute allowedRoles={['nutricionista','psicologo']}><ProfissionalLayout /></RoleRoute>}>
             <Route path="clientes" element={<CadastroCliente />} />
             <Route path="anamnese" element={<AnamneseNutricionista />} />
             <Route path="plano-alimentar" element={<PlanoAlimentarNutricionista />} />
