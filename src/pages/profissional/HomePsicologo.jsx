@@ -4,12 +4,17 @@ import { db } from '../../firebase/config';
 import { doc, getDoc, collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import Chart from 'chart.js/auto';
 import DatePicker from '../../components/DatePicker';
+import Loading from '../../components/Loading';
+import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 export default function HomePsicologo() {
   const { user } = useAuth();
   const [pacientes, setPacientes] = useState([]);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
+  const storageKey = `selectedPaciente_${user.login}`;
+  const [isRestored, setIsRestored] = useState(false);
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
     ansiedade: 5, depressao: 5, estresse: 5, sono: 5,
@@ -18,6 +23,8 @@ export default function HomePsicologo() {
 
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const { toast } = useToast();
+  const confirmHook = useConfirm();
 
   useEffect(() => {
     const loadPacientes = async () => {
@@ -37,7 +44,26 @@ export default function HomePsicologo() {
   }, [user.login]);
 
   useEffect(() => {
-    if (!selectedPaciente) return;
+    if (pacientes.length === 0) return;
+    const savedLogin = localStorage.getItem(storageKey);
+    if (savedLogin) {
+      const pac = pacientes.find(p => p.login === savedLogin);
+      if (pac) setSelectedPaciente(pac);
+    }
+    setIsRestored(true);
+  }, [pacientes, storageKey]);
+
+  useEffect(() => {
+    if (!isRestored) return;
+    if (selectedPaciente) {
+      localStorage.setItem(storageKey, selectedPaciente.login);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [selectedPaciente, storageKey, isRestored]);
+
+  useEffect(() => {
+    if (!selectedPaciente) { toast.warning('Selecione um paciente!'); return; }
     const loadEvals = async () => {
       const q = query(collection(db, 'avaliacao_nutricional'), where('paciente_login', '==', selectedPaciente.login), where('tipo', '==', 'psicologica'));
       const snap = await getDocs(q);
@@ -75,7 +101,7 @@ export default function HomePsicologo() {
 
   const salvarAvaliacao = async (e) => {
     e.preventDefault();
-    if (!selectedPaciente) return alert('Selecione um paciente');
+    if (!selectedPaciente) return toast.warning('Selecione um paciente!');
     try {
       await addDoc(collection(db, 'avaliacao_nutricional'), {
         paciente_login: selectedPaciente.login,
@@ -93,7 +119,7 @@ export default function HomePsicologo() {
         },
         observacoes: form.observacoes
       });
-      alert('Avaliação salva!');
+      toast.success('Avaliação salva!');
       // Recarrega
       const q = query(collection(db, 'avaliacao_nutricional'), where('paciente_login', '==', selectedPaciente.login), where('tipo', '==', 'psicologica'));
       const snap = await getDocs(q);
@@ -103,10 +129,13 @@ export default function HomePsicologo() {
       setEvaluations(evals);
       setForm({ ...form, observacoes: '' });
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro: ' + err.message);
     }
   };
 
+  if (pacientes.length === 0) {
+    return <Loading message="Carregando..." />;
+  }
   return (
     <>
       <div className="info-section" style={{ marginBottom: 24 }}>

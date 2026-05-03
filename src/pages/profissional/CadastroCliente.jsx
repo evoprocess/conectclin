@@ -8,6 +8,8 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import DatePicker from '../../components/DatePicker';
+import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 export default function CadastroCliente() {
   const { user } = useAuth();
@@ -23,10 +25,11 @@ export default function CadastroCliente() {
   });
   const [detalhes, setDetalhes] = useState(null);
   const [codigo, setCodigo] = useState(null);
-
+  const toast = useToast();
   const gerarCodigo = () => Math.floor(100000 + Math.random() * 900000).toString();
   const gerarEmail = (login) => `${login.toLowerCase()}@tratamentoweb.com`;
   const podeCadastrar = user.perfil === 'gerente';
+  const confirm = useConfirm();
 
   const carregarClientes = async () => {
     try {
@@ -80,11 +83,11 @@ export default function CadastroCliente() {
   const salvarCliente = async (e) => {
     e.preventDefault();
     const { nome, login, dataNascimento, sexo } = form;
-    if (!nome || !login || !dataNascimento || !sexo) return alert('Preencha todos os campos obrigatórios!');
-    if (login.includes(' ')) return alert('O login não pode conter espaços.');
+    if (!nome || !login || !dataNascimento || !sexo) return toast.warning('Preencha todos os campos obrigatórios!');
+    if (login.includes(' ')) return toast.error('O login não pode conter espaços.');
 
     const idade = Math.floor((new Date() - new Date(dataNascimento)) / (365.25 * 24 * 60 * 60 * 1000));
-    if (idade < 18) return alert('Paciente deve ter 18 anos ou mais.');
+    if (idade < 18) return toast.error('Paciente deve ter 18 anos ou mais.');
 
     try {
       if (editing) {
@@ -97,10 +100,10 @@ export default function CadastroCliente() {
           email: form.email,
           endereco: form.endereco,
         });
-        alert('Cliente atualizado!');
+        toast.success('Cliente atualizado!');
       } else {
         const jaExiste = clientes.some(c => c.login === login);
-        if (jaExiste) return alert('Login já existe!');
+        if (jaExiste) return toast.error('Login já existe!');
         const codigoTemp = gerarCodigo();
         const expiracao = new Date();
         expiracao.setDate(expiracao.getDate() + 7);
@@ -128,28 +131,29 @@ export default function CadastroCliente() {
         pacientes[login] = nome.toUpperCase();
         await setDoc(profRef, { pacientes }, { merge: true });
 
-        alert(`✅ Cliente "${nome}" cadastrado! Código: ${codigoTemp}`);
+        toast.success(`✅ Cliente "${nome}" cadastrado! Código: ${codigoTemp}`);
       }
       setShowModal(false);
       carregarClientes();
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro: ' + err.message);
     }
   };
 
   const verDetalhes = (cliente) => setDetalhes(cliente);
   const verCodigo = async (login) => {
     const pacDoc = await getDoc(doc(db, 'logins', login));
-    if (!pacDoc.exists()) return alert('Paciente não encontrado.');
+    if (!pacDoc.exists()) return toast.error('Paciente não encontrado.');
     const data = pacDoc.data();
-    if (data.ultimo_login) return alert('Paciente já fez primeiro acesso.');
+    if (data.ultimo_login) return toast.warning('Paciente já fez primeiro acesso.');
     const exp = new Date(data.codigo_expiracao);
-    if (exp < new Date()) return alert('Código expirado!');
+    if (exp < new Date()) return toast.error('Código expirado!');
     setCodigo({ nome: data.nome, login, codigo: data.codigo_temporario, expiracao: exp.toLocaleString('pt-BR') });
   };
 
   const resetarSenha = async (login) => {
-    if (!confirm('Gerar token de reset?')) return;
+  const result = await confirm('Gerar token de reset de senha para este paciente?');
+    if (!result) return;
     const token = gerarCodigo();
     const exp = new Date();
     exp.setHours(exp.getHours() + 1);
@@ -157,23 +161,26 @@ export default function CadastroCliente() {
       reset_token: token,
       reset_token_expiracao: exp.toISOString(),
     });
-    alert(`Token: ${token}\nVálido por 1 hora`);
+    toast.success(`Token: ${token}\nVálido por 1 hora`);
   };
 
   const suspender = async (login) => {
-    if (!confirm('Suspender cliente?')) return;
+    const result = await confirm('Suspender cliente?');
+    if (!result) return;
     await updateDoc(doc(db, 'logins', login), { status_ativo: false });
     carregarClientes();
   };
 
   const ativar = async (login) => {
-    if (!confirm('Reativar cliente?')) return;
+    const result = await confirm('Reativar cliente?');
+    if (!result) return;
     await updateDoc(doc(db, 'logins', login), { status_ativo: true });
     carregarClientes();
   };
 
   const desvincular = async (login) => {
-    if (!confirm('Desvincular paciente?')) return;
+  const result = await confirm('Tem certeza que deseja DESVINCULAR este paciente?');
+  if (!result) return;
     const profRef = doc(db, 'logins', user.login);
     const profDoc = await getDoc(profRef);
     const pacientes = profDoc.data()?.pacientes || {};

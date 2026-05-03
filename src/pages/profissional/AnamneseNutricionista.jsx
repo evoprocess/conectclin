@@ -5,13 +5,17 @@ import {
   doc, getDoc, collection, addDoc, getDocs, query, where, updateDoc,
 } from 'firebase/firestore';
 import DatePicker from '../../components/DatePicker';
+import Loading from '../../components/Loading';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function AnamneseNutricionista() {
   const { user } = useAuth();
   const [pacientes, setPacientes] = useState([]);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [anamnese, setAnamnese] = useState(null);
-
+  const storageKey = `selectedPaciente_${user.login}`;
+  const [isRestored, setIsRestored] = useState(false);
+  const toast = useToast();
   const [form, setForm] = useState({
     dataAnamnese: new Date().toISOString().split('T')[0],
     profissional: user.nome || '',
@@ -68,6 +72,25 @@ export default function AnamneseNutricionista() {
     };
     loadPacientes();
   }, []);
+
+  useEffect(() => {
+    if (pacientes.length === 0) return; // aguarda pacientes carregarem
+    const savedLogin = localStorage.getItem(storageKey);
+    if (savedLogin) {
+      const pac = pacientes.find(p => p.login === savedLogin);
+      if (pac) setSelectedPaciente(pac);
+    }
+    setIsRestored(true);
+  }, [pacientes, storageKey]);
+
+  useEffect(() => {
+    if (!isRestored) return;
+    if (selectedPaciente) {
+      localStorage.setItem(storageKey, selectedPaciente.login);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [selectedPaciente, storageKey, isRestored]);
 
   // Carregar anamnese do paciente selecionado
   useEffect(() => {
@@ -152,7 +175,7 @@ export default function AnamneseNutricionista() {
   };
 
   const salvarAnamnese = async () => {
-    if (!selectedPaciente) return alert('Selecione um paciente!');
+    if (!selectedPaciente) return toast.warning('Selecione um paciente!');
     const data = {
       paciente_login: selectedPaciente.login,
       paciente_nome: selectedPaciente.nome,
@@ -211,10 +234,10 @@ export default function AnamneseNutricionista() {
     try {
       if (anamnese?.id) {
         await updateDoc(doc(db, 'anamneses_nutricionais', anamnese.id), data);
-        alert('Anamnese atualizada!');
+        toast.success('Anamnese atualizada!');
       } else {
         await addDoc(collection(db, 'anamneses_nutricionais'), data);
-        alert('Anamnese criada!');
+        toast.success('Anamnese criada!');
       }
       // Recarregar a anamnese para atualizar ID
       const q = query(collection(db, 'anamneses_nutricionais'), where('paciente_login', '==', selectedPaciente.login));
@@ -225,12 +248,14 @@ export default function AnamneseNutricionista() {
         setAnamnese({ id: docs[0].id, ...docs[0].data() });
       }
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro ao salvar anamnese!');
     }
   };
 
   const inputStyle = { padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0', width: '100%' };
-
+  if (pacientes.length === 0) {
+    return <Loading message="Carregando anamnese..." />;
+  }
   return (
     <>
       <div className="info-section" style={{ marginBottom: 24 }}>

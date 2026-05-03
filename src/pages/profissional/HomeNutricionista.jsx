@@ -12,6 +12,8 @@ import {
 } from 'firebase/firestore';
 import Chart from 'chart.js/auto';
 import DatePicker from '../../components/DatePicker';
+import Loading from '../../components/Loading';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function HomeNutricionista() {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ export default function HomeNutricionista() {
   const [evaluations, setEvaluations] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
+  const [isRestored, setIsRestored] = useState(false);
 
   // Modal de avaliação
   const [showModal, setShowModal] = useState(false);
@@ -28,6 +31,9 @@ export default function HomeNutricionista() {
     muscleMass: '', bodyFat: '', glucose: '', cholesterol: ''
   });
 
+  const storageKey = `selectedPaciente_${user.login}`;
+  const toast = useToast();
+  
   // Gráficos
   const weightChartRef = useRef(null);
   const imcChartRef = useRef(null);
@@ -60,6 +66,26 @@ export default function HomeNutricionista() {
     };
     loadPacientes();
   }, [user.login]);
+
+  // Restaura paciente salvo ao carregar a página
+  useEffect(() => {
+    const savedLogin = localStorage.getItem(storageKey);
+    if (savedLogin && pacientes.length > 0) {
+      const pac = pacientes.find(p => p.login === savedLogin);
+      if (pac) setSelectedPaciente(pac);
+    }
+    setIsRestored(true);
+  }, [pacientes, storageKey]);
+
+  // Salva paciente selecionado no localStorage
+  useEffect(() => {
+    if (!isRestored) return; // só age depois da restauração
+    if (selectedPaciente) {
+      localStorage.setItem(storageKey, selectedPaciente.login);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [selectedPaciente, storageKey]);
 
   // Carregar avaliações do paciente selecionado
   useEffect(() => {
@@ -166,7 +192,7 @@ export default function HomeNutricionista() {
 
   const salvarAvaliacao = async (e) => {
     e.preventDefault();
-    if (!selectedPaciente) return alert('Selecione um paciente!');
+    if (!selectedPaciente) return toast.warning('Selecione um paciente!');
     try {
       await addDoc(collection(db, 'avaliacao_nutricional'), {
         paciente_login: selectedPaciente.login,
@@ -190,7 +216,7 @@ export default function HomeNutricionista() {
           colesterol_total: parseFloat(formData.cholesterol) || null
         }
       });
-      alert('Avaliação salva!');
+      toast.success('Avaliação salva!');
       setShowModal(false);
       // Recarregar avaliações
       const q = query(collection(db, 'avaliacao_nutricional'), where('paciente_login', '==', selectedPaciente.login));
@@ -200,7 +226,7 @@ export default function HomeNutricionista() {
       evals.sort((a, b) => new Date(a.data_avaliacao) - new Date(b.data_avaliacao));
       setEvaluations(evals);
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.show('Erro ao salvar avaliação!', 'error');
     }
   };
 
@@ -211,7 +237,9 @@ export default function HomeNutricionista() {
     idade: selectedPaciente.dataNascimento ? Math.floor((new Date() - new Date(selectedPaciente.dataNascimento)) / (365.25 * 24 * 60 * 60 * 1000)) : '--',
     sexo: selectedPaciente.sexo || '--'
   } : null;
-
+  if (pacientes.length === 0) {
+    return <Loading message="Carregando..." />;
+  }
   return (
     <>
       {/* Seletor de paciente */}
@@ -286,7 +314,7 @@ export default function HomeNutricionista() {
 
       {/* Botão nova avaliação */}
       <div style={{ position: 'fixed', bottom: 30, right: 30, zIndex: 100 }}>
-        <button className="btn-primary btn-expand" onClick={() => { if (!selectedPaciente) alert('Selecione um paciente!'); else { setFormData({ weight: '', height: '', imc: '', classification: '', muscleMass: '', bodyFat: '', glucose: '', cholesterol: '' }); setShowModal(true); } }}>
+        <button className="btn-primary btn-expand" onClick={() => { if (!selectedPaciente) { toast.warning('Selecione um paciente!'); } else { setFormData({ weight: '', height: '', imc: '', classification: '', muscleMass: '', bodyFat: '', glucose: '', cholesterol: '' }); setShowModal(true); } }}>
           <span className="btn-text">Nova Avaliação Nutricional</span>
         </button>
       </div>

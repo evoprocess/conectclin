@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../firebase/config';
+import Loading from '../../components/Loading';
+import { useToast } from '../../contexts/ToastContext';
 import {
   doc,
   getDoc,
@@ -17,7 +19,9 @@ export default function PlanoAlimentarNutricionista() {
   const [pacientes, setPacientes] = useState([]);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [plano, setPlano] = useState(null);
-
+  const storageKey = `selectedPaciente_${user.login}`;
+  const [isRestored, setIsRestored] = useState(false);
+  const toast = useToast();
   const [form, setForm] = useState({
     breakfast: '',
     morningSnack: '',
@@ -48,6 +52,24 @@ export default function PlanoAlimentarNutricionista() {
     loadPacientes();
   }, []);
 
+  useEffect(() => {
+    if (pacientes.length === 0) return;          // aguarda a lista
+    const savedLogin = localStorage.getItem(storageKey);
+    if (savedLogin) {
+      const pac = pacientes.find(p => p.login === savedLogin);
+      if (pac) setSelectedPaciente(pac);
+    }
+    setIsRestored(true);
+  }, [pacientes, storageKey]);
+
+  useEffect(() => {
+    if (!isRestored) return;
+    if (selectedPaciente) {
+      localStorage.setItem(storageKey, selectedPaciente.login);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [selectedPaciente, storageKey, isRestored]);
   // Carregar plano alimentar do paciente selecionado
   useEffect(() => {
     if (!selectedPaciente) {
@@ -89,7 +111,7 @@ export default function PlanoAlimentarNutricionista() {
   }, [selectedPaciente]);
 
   const salvarPlano = async () => {
-    if (!selectedPaciente) return alert('Selecione um paciente!');
+    if (!selectedPaciente) return toast.warning('Selecione um paciente!');
     const data = {
       paciente_login: selectedPaciente.login,
       paciente_nome: selectedPaciente.nome,
@@ -110,10 +132,10 @@ export default function PlanoAlimentarNutricionista() {
     try {
       if (plano?.id) {
         await updateDoc(doc(db, 'planos_alimentares', plano.id), data);
-        alert('Plano atualizado!');
+        toast.success('Plano atualizado!');
       } else {
         await addDoc(collection(db, 'planos_alimentares'), data);
-        alert('Plano criado!');
+        toast.success('Plano criado!');
       }
       // Recarrega
       const q = query(collection(db, 'planos_alimentares'), where('paciente_login', '==', selectedPaciente.login));
@@ -124,12 +146,14 @@ export default function PlanoAlimentarNutricionista() {
         setPlano({ id: docs[0].id, ...docs[0].data() });
       }
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro ao salvar plano: ' + err.message);
     }
   };
 
   const inputStyle = { width: '100%', minHeight: 120, padding: 12, border: 'none', resize: 'vertical' };
-
+  if (pacientes.length === 0) {
+    return <Loading message="Carregando..." />;
+  }
   return (
     <>
       <div className="info-section" style={{ marginBottom: 24 }}>

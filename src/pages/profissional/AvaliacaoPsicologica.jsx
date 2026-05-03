@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../firebase/config';
+import Loading from '../../components/Loading';
+import { useToast } from '../../contexts/ToastContext';
 import {
   doc,
   getDoc,
@@ -18,6 +20,8 @@ export default function AvaliacaoPsicologica() {
   const [pacientes, setPacientes] = useState([]);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
+  const storageKey = `selectedPaciente_${user.login}`;
+  const [isRestored, setIsRestored] = useState(false);
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
     ansiedade: 5,
@@ -29,6 +33,7 @@ export default function AvaliacaoPsicologica() {
 
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const toast = useToast();
 
   // Carregar pacientes vinculados
   useEffect(() => {
@@ -47,6 +52,25 @@ export default function AvaliacaoPsicologica() {
     };
     loadPacientes();
   }, []);
+
+  useEffect(() => {
+    if (pacientes.length === 0) return;
+    const savedLogin = localStorage.getItem(storageKey);
+    if (savedLogin) {
+      const pac = pacientes.find(p => p.login === savedLogin);
+      if (pac) setSelectedPaciente(pac);
+    }
+    setIsRestored(true);
+  }, [pacientes, storageKey]);
+
+  useEffect(() => {
+    if (!isRestored) return;
+    if (selectedPaciente) {
+      localStorage.setItem(storageKey, selectedPaciente.login);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [selectedPaciente, storageKey, isRestored]);
 
   // Carregar avaliações psicológicas do paciente selecionado
   useEffect(() => {
@@ -101,7 +125,7 @@ export default function AvaliacaoPsicologica() {
 
   const salvarAvaliacao = async (e) => {
     e.preventDefault();
-    if (!selectedPaciente) return alert('Selecione um paciente!');
+    if (!selectedPaciente) return toast.warning('Selecione um paciente!');
     try {
       await addDoc(collection(db, 'avaliacao_nutricional'), {
         paciente_login: selectedPaciente.login,
@@ -119,7 +143,7 @@ export default function AvaliacaoPsicologica() {
         },
         observacoes: form.observacoes,
       });
-      alert('✅ Avaliação salva!');
+      toast.success('✅ Avaliação salva!');
 
       // Recarregar avaliações
       const q = query(collection(db, 'avaliacao_nutricional'), where('paciente_login', '==', selectedPaciente.login), where('tipo', '==', 'psicologica'));
@@ -131,10 +155,12 @@ export default function AvaliacaoPsicologica() {
 
       setForm(prev => ({ ...prev, observacoes: '' }));
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro ao salvar avaliação: ' + err.message);
     }
   };
-
+  if (pacientes.length === 0) {
+    return <Loading message="Carregando..." />;
+  }
   return (
     <>
       <div className="info-section" style={{ marginBottom: 24 }}>

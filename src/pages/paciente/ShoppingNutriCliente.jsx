@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, uploadParaImgbb } from '../../firebase/config';
+import { useToast } from '../../contexts/ToastContext';
 import {
   doc,
   getDoc,
@@ -23,6 +24,8 @@ export default function ShoppingNutriCliente() {
   const [userNivel, setUserNivel] = useState(1);
   const [userExperiencia, setUserExperiencia] = useState(0);
   const [xpProxNivel, setXpProxNivel] = useState(100);
+
+  const toast = useToast();
 
   // Loja e histórico
   const [itensLoja, setItensLoja] = useState([]);
@@ -285,7 +288,7 @@ export default function ShoppingNutriCliente() {
       );
       const snap = await getDocs(q);
       if (!snap.empty) {
-        alert('Você já completou este desafio hoje!');
+        toast.warning('Você já completou este desafio hoje!');
         return;
       }
       await addDoc(collection(db, 'desafios_completados'), {
@@ -297,7 +300,7 @@ export default function ShoppingNutriCliente() {
         data_completado: new Date().toISOString(),
       });
       await adicionarPontos(desafio.pontos, `⭐ Desafio: ${desafio.titulo}`, 'ganho');
-      alert(`🎉 Desafio completado! +${desafio.pontos} pontos`);
+      toast.success(`🎉 Desafio completado! +${desafio.pontos} pontos`);
       atualizarListaDesafios();
     } catch (err) {
       console.error(err);
@@ -319,7 +322,7 @@ export default function ShoppingNutriCliente() {
       setAnaliseIA(null);
       setFotoTemp(null);
     } catch (err) {
-      alert('Erro ao acessar câmera: ' + err.message);
+      toast.error('Erro ao acessar câmera: ' + err.message);
       setShowCamera(false);
     }
   };
@@ -406,9 +409,9 @@ export default function ShoppingNutriCliente() {
 
     if (status === 'aprovado_ia') {
       await adicionarPontos(desafioSelecionado.pontos, `📸 Desafio: ${desafioSelecionado.titulo} (IA)`, 'ganho');
-      alert(`✅ Parabéns! +${desafioSelecionado.pontos} pontos!`);
+      toast.success(`✅ Parabéns! +${desafioSelecionado.pontos} pontos!`);
     } else {
-      alert('📸 Foto enviada para análise do nutricionista.');
+      toast.info('📸 Foto enviada para análise do nutricionista.');
     }
     setFotoTemp(null);
     setAnaliseIA(null);
@@ -475,7 +478,7 @@ export default function ShoppingNutriCliente() {
       });
       await adicionarTransacao(-itemTroca.pontos, `🛍️ Troca: ${itemTroca.nome}`, 'gasto');
       setUserPontos(prev => prev - itemTroca.pontos);
-      alert(`✅ Resgate realizado!`);
+      toast.success(`✅ Resgate realizado!`);
       setShowTrocaModal(false);
     } catch (err) {
       console.error(err);
