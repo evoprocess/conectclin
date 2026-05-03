@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../firebase/config';
+import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { doc, getDoc, collection, getDocs, query, where, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 
 export default function ShoppingNutriNutricionista() {
@@ -13,6 +15,8 @@ export default function ShoppingNutriNutricionista() {
   const [showNovoItem, setShowNovoItem] = useState(false);
   const [novoItem, setNovoItem] = useState({ nome: '', descricao: '', pontos: 0, icone: '🎁' });
   const [editandoItem, setEditandoItem] = useState(null);
+  const toast = useToast();
+  const confirmHook = useConfirm(); // evitar conflito com a variável "confirm" do window
 
   // Carregar pacientes vinculados
   useEffect(() => {
@@ -71,7 +75,8 @@ export default function ShoppingNutriNutricionista() {
   }, []);
 
   const aprovarFoto = async (fotoId, pontos) => {
-    if (!confirm('Aprovar foto e creditar pontos?')) return;
+    const aprovado = await confirmHook('Aprovar foto e creditar pontos?');
+    if (!aprovado) return;
     try {
       await updateDoc(doc(db, 'fotos_desafio', fotoId), { status: 'aprovado_manual' });
       // Adicionar pontos ao paciente
@@ -98,23 +103,24 @@ export default function ShoppingNutriNutricionista() {
         data: new Date().toISOString(),
         saldo_apos: novosPontos
       });
-      alert(`✅ Foto aprovada! +${pontos} pontos para o paciente.`);
+      toast.success(`✅ Foto aprovada! +${pontos} pontos para o paciente.`);
       setFotosPendentes(prev => prev.filter(f => f.id !== fotoId));
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro: ' + err.message);
     }
   };
 
   const reprovarFoto = async (fotoId) => {
-    if (!confirm('Reprovar foto?')) return;
+    const reprovado = await confirmHook('Reprovar foto?');
+    if (!reprovado) return;
     await updateDoc(doc(db, 'fotos_desafio', fotoId), { status: 'reprovado' });
     setFotosPendentes(prev => prev.filter(f => f.id !== fotoId));
-    alert('Foto reprovada.');
+    toast.info('Foto reprovada.');
   };
 
   const salvarItem = async (e) => {
     e.preventDefault();
-    if (!novoItem.nome || !novoItem.pontos) return alert('Preencha nome e pontos!');
+    if (!novoItem.nome || !novoItem.pontos) return toast.warning('Preencha nome e pontos!');
     try {
       if (editandoItem) {
         await updateDoc(doc(db, 'itens_recompensa', editandoItem), novoItem);
@@ -125,9 +131,9 @@ export default function ShoppingNutriNutricionista() {
       setNovoItem({ nome: '', descricao: '', pontos: 0, icone: '🎁' });
       setEditandoItem(null);
       carregarItensLoja();
-      alert('Item salvo!');
+      toast.success('Item salvo!');
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro: ' + err.message);
     }
   };
 

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../firebase/config';
+import Loading from '../../components/Loading';
+import { useToast } from '../../contexts/ToastContext';
 import {
   doc,
   getDoc,
@@ -17,7 +19,9 @@ export default function CalculoEnergeticoNutricionista() {
   const [pacientes, setPacientes] = useState([]);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [calculo, setCalculo] = useState(null);
-
+  const storageKey = `selectedPaciente_${user.login}`;
+  const [isRestored, setIsRestored] = useState(false);
+  const toast = useToast();
   const [form, setForm] = useState({
     peso: '',
     altura: '',
@@ -63,6 +67,25 @@ export default function CalculoEnergeticoNutricionista() {
     };
     loadPacientes();
   }, []);
+
+  useEffect(() => {
+    if (pacientes.length === 0) return;          // aguarda a lista
+    const savedLogin = localStorage.getItem(storageKey);
+    if (savedLogin) {
+      const pac = pacientes.find(p => p.login === savedLogin);
+      if (pac) setSelectedPaciente(pac);
+    }
+    setIsRestored(true);
+  }, [pacientes, storageKey]);
+
+  useEffect(() => {
+    if (!isRestored) return;
+    if (selectedPaciente) {
+      localStorage.setItem(storageKey, selectedPaciente.login);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [selectedPaciente, storageKey, isRestored]);
 
   // Carregar cálculo do paciente selecionado
   useEffect(() => {
@@ -214,7 +237,7 @@ export default function CalculoEnergeticoNutricionista() {
   };
 
   const salvarCalculo = async () => {
-    if (!selectedPaciente) return alert('Selecione um paciente!');
+    if (!selectedPaciente) return toast.warning('Selecione um paciente!');
 
     try {
       const data = {
@@ -262,10 +285,10 @@ export default function CalculoEnergeticoNutricionista() {
 
       if (calculo?.id) {
         await updateDoc(doc(db, 'calculos_energeticos', calculo.id), data);
-        alert('Cálculo atualizado!');
+        toast.success('Cálculo atualizado!');
       } else {
         await addDoc(collection(db, 'calculos_energeticos'), data);
-        alert('Cálculo salvo!');
+        toast.success('Cálculo salvo!');
       }
 
       const q = query(collection(db, 'calculos_energeticos'), where('paciente_login', '==', selectedPaciente.login));
@@ -276,12 +299,15 @@ export default function CalculoEnergeticoNutricionista() {
         setCalculo({ id: docs[0].id, ...docs[0].data() });
       }
     } catch (err) {
-      alert('Erro: ' + err.message);
+      toast.error('Erro ao salvar cálculo: ' + err.message);
     }
   };
 
   const inputStyle = { padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0' };
   const readOnlyStyle = { ...inputStyle, background: '#f1f5f9' };
+  if (pacientes.length === 0) {
+    return <Loading message="Carregando..." />;
+  }
 
   return (
     <>
