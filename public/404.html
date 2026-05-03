@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TratamentoWeb</title>
+  <script type="text/javascript">
+    // Redireciona para a página inicial do SPA preservando o caminho como hash
+    const path = window.location.pathname;
+    // Evita loop se já estiver com hash ou se for a raiz
+    if (path !== '/' && !path.startsWith('/tratamento-web') && !path.startsWith('/#')) {
+      const base = window.location.origin;
+      // Se estiver usando base '/', redireciona para a raiz com hash
+      // Ex: /profissional/home → /#/profissional/home
+      window.location.replace(base + '/#' + path);
+    } else {
+      // Se já estiver na raiz, apenas carrega o index.html
+      window.location.replace('/');
+    }
+  </script>
+</head>
+<body></body>
+</html>
