@@ -3,16 +3,19 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://evoprocess.github.io/tratamento-web",
   "scripts": {
     "dev": "vite --open",
     "build": "vite build",
     "lint": "eslint .",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
     "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.13.1",
     "chart.js": "^4.5.1",
     "date-fns": "^2.30.0",
     "firebase": "^12.12.1",

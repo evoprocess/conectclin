@@ -1,0 +1,69 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      # 🐞 Debug: verifica se os secrets estão acessíveis
+      - name: Debug Secrets
+        run: |
+          if [ -z "$VITE_FIREBASE_API_KEY" ]; then echo "❌ VITE_FIREBASE_API_KEY não definido"; else echo "✅ VITE_FIREBASE_API_KEY definido"; fi
+          if [ -z "$VITE_FIREBASE_AUTH_DOMAIN" ]; then echo "❌ VITE_FIREBASE_AUTH_DOMAIN não definido"; else echo "✅ VITE_FIREBASE_AUTH_DOMAIN definido"; fi
+          if [ -z "$VITE_FIREBASE_PROJECT_ID" ]; then echo "❌ VITE_FIREBASE_PROJECT_ID não definido"; else echo "✅ VITE_FIREBASE_PROJECT_ID definido"; fi
+          if [ -z "$VITE_FIREBASE_STORAGE_BUCKET" ]; then echo "❌ VITE_FIREBASE_STORAGE_BUCKET não definido"; else echo "✅ VITE_FIREBASE_STORAGE_BUCKET definido"; fi
+          if [ -z "$VITE_FIREBASE_MESSAGING_SENDER_ID" ]; then echo "❌ VITE_FIREBASE_MESSAGING_SENDER_ID não definido"; else echo "✅ VITE_FIREBASE_MESSAGING_SENDER_ID definido"; fi
+          if [ -z "$VITE_FIREBASE_APP_ID" ]; then echo "❌ VITE_FIREBASE_APP_ID não definido"; else echo "✅ VITE_FIREBASE_APP_ID definido"; fi
+          if [ -z "$VITE_APP_CHECK_SITE_KEY" ]; then echo "❌ VITE_APP_CHECK_SITE_KEY não definido"; else echo "✅ VITE_APP_CHECK_SITE_KEY definido"; fi
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_APP_CHECK_SITE_KEY: ${{ secrets.VITE_APP_CHECK_SITE_KEY }}
+
+      - name: Build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_APP_CHECK_SITE_KEY: ${{ secrets.VITE_APP_CHECK_SITE_KEY }}
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
