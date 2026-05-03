@@ -4,28 +4,26 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  deleteUser // não vamos usar deleteUser, só logout
 } from 'firebase/auth';
 import {
   doc,
   getDoc,
   updateDoc,
   deleteField,
-  serverTimestamp
+  serverTimestamp,
 } from 'firebase/firestore';
 
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
 
 const CARGOS_VALIDOS = ['paciente', 'nutricionista', 'psicologo'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // para ver auto login
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Auto login: verificar localStorage ao iniciar
+  // Auto login via localStorage
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
@@ -53,10 +51,8 @@ export function AuthProvider({ children }) {
     const emailMontado = `${loginInput.toLowerCase()}@tratamentoweb.com`;
 
     try {
-      // Autenticar no Firebase Auth
+      // Tenta autenticar normalmente
       const userCredential = await signInWithEmailAndPassword(auth, emailMontado, password);
-
-      // Buscar dados no Firestore
       const userRef = doc(db, 'logins', loginInput);
       const userDoc = await getDoc(userRef);
 
@@ -79,45 +75,25 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Verificar primeiro acesso (paciente sem ultimo_login)
+      // Se for paciente e NÃO tiver ultimo_login, significa que é o primeiro acesso
+      // (mas se chegou aqui é porque a senha já foi criada, então não deveria acontecer)
       const isPaciente = userData.cargo === 'paciente';
       const hasPrimeiroAcesso = userData.hasOwnProperty('ultimo_login');
 
       if (isPaciente && !hasPrimeiroAcesso) {
-        if (password !== userData.codigo_temporario) {
-          await signOut(auth);
-          setError('Código temporário inválido!');
-          return null; // retorna null indicando que precisa criar senha
-        }
-        const dataExpiracao = new Date(userData.codigo_expiracao);
-        if (dataExpiracao < new Date()) {
-          await signOut(auth);
-          setError('Código expirado! Solicite um novo código.');
-          return null;
-        }
-        // Retorna dados para criação de senha
-        return {
-          login: loginInput,
-          email: emailMontado,
-          nome: userData.nome,
-          cargo: userData.cargo,
-          perfil: userData.perfil,
-          userRef
-        };
+        // Força a atualização do ultimo_login mesmo que tenha caído aqui
+        await updateDoc(userRef, { ultimo_login: serverTimestamp() });
+      } else {
+        await updateDoc(userRef, { ultimo_login: serverTimestamp() });
       }
 
-      // Atualiza último login
-      await updateDoc(userRef, { ultimo_login: serverTimestamp() });
-
-      // Prepara sessão
       const sessionUser = {
         ...userData,
         login: loginInput,
         email: emailMontado,
-        perfil: userData.perfil || (isPaciente ? 'operador' : 'supervisor')
+        perfil: userData.perfil || (isPaciente ? 'operador' : 'supervisor'),
       };
 
-      // Salvar credenciais se necessário
       if (remember) {
         localStorage.setItem('savedLogin', loginInput);
         localStorage.setItem('savedPassword', password);
@@ -130,45 +106,77 @@ export function AuthProvider({ children }) {
 
       localStorage.setItem('currentUser', JSON.stringify(sessionUser));
       setUser(sessionUser);
-      return sessionUser; // sucesso
+      return sessionUser;
     } catch (authError) {
+      // Tratamento de erros
       if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password') {
         setError('Login ou senha incorretos!');
       } else if (authError.code === 'auth/user-not-found') {
-        // Tentar primeiro acesso
+        // ========== PRIMEIRO ACESSO ==========
         try {
           const userRef = doc(db, 'logins', loginInput);
           const userDoc = await getDoc(userRef);
+
           if (!userDoc.exists()) {
             setError('Login não encontrado!');
             return;
           }
+
           const userData = userDoc.data();
           if (userData.cargo !== 'paciente') {
             setError('Usuário não encontrado no sistema. Contate o administrador.');
             return;
           }
+
+          // Valida o código temporário
           if (password !== userData.codigo_temporario) {
             setError('Código temporário inválido!');
             return;
           }
+
           const dataExpiracao = new Date(userData.codigo_expiracao);
           if (dataExpiracao < new Date()) {
             setError('Código expirado! Solicite um novo código ao profissional.');
             return;
           }
+
+          // Cria a conta no Firebase Auth AUTOMATICAMENTE
           const emailMontado = `${loginInput.toLowerCase()}@tratamentoweb.com`;
-          return {
+          await createUserWithEmailAndPassword(auth, emailMontado, password);
+
+          // Atualiza o Firestore: remove código temporário e adiciona ultimo_login
+          await updateDoc(userRef, {
+            ultimo_login: serverTimestamp(),
+            codigo_temporario: deleteField(),
+            codigo_expiracao: deleteField(),
+            email: emailMontado,
+          });
+
+          // Sessão do usuário
+          const sessionUser = {
+            ...userData,
             login: loginInput,
             email: emailMontado,
-            nome: userData.nome,
-            cargo: userData.cargo,
-            perfil: userData.perfil,
-            userRef
+            perfil: userData.perfil || 'operador',
+            ultimo_login: new Date().toISOString(),
           };
+
+          if (remember) {
+            localStorage.setItem('savedLogin', loginInput);
+            localStorage.setItem('savedPassword', password);
+            localStorage.setItem('rememberLogin', 'true');
+          } else {
+            localStorage.removeItem('savedLogin');
+            localStorage.removeItem('savedPassword');
+            localStorage.setItem('rememberLogin', 'false');
+          }
+
+          localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+          setUser(sessionUser);
+          return sessionUser;
         } catch (e) {
-          setError('Erro ao verificar dados. Tente novamente.');
-          return;
+          console.error('Erro no primeiro acesso:', e);
+          setError('Erro ao criar acesso. Tente novamente.');
         }
       } else if (authError.message.includes('permissions')) {
         setError('Erro de permissão no banco de dados. Contate o administrador.');
@@ -179,48 +187,17 @@ export function AuthProvider({ children }) {
     return null;
   };
 
-  const createPasswordAndLogin = async (tempData, newPassword) => {
-    setError(null);
-    try {
-      await createUserWithEmailAndPassword(auth, tempData.email, newPassword);
-      await updateDoc(tempData.userRef, {
-        ultimo_login: serverTimestamp(),
-        codigo_temporario: deleteField(),
-        codigo_expiracao: deleteField(),
-        email: tempData.email
-      });
-      const updatedDoc = await getDoc(tempData.userRef);
-      const userData = updatedDoc.data();
-      const sessionUser = {
-        ...userData,
-        login: tempData.login,
-        email: tempData.email,
-        perfil: userData.perfil || 'operador'
-      };
-      localStorage.setItem('currentUser', JSON.stringify(sessionUser));
-      setUser(sessionUser);
-      return sessionUser;
-    } catch (err) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Este login já possui cadastro. Contate o administrador.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Senha muito fraca. Use pelo menos 6 caracteres.');
-      } else {
-        setError('Erro ao criar conta: ' + err.message);
-      }
-    }
-    return null;
+  const logout = () => {
+    signOut(auth)
+      .then(() => {
+        localStorage.removeItem('currentUser');
+        document.body.classList.remove('profile-paciente', 'profile-profissional');
+        setUser(null);
+      })
+      .catch((err) => console.error('Erro ao deslogar:', err));
   };
 
-  const logout = () => {
-  signOut(auth).then(() => {
-    localStorage.removeItem('currentUser');
-    document.body.classList.remove('profile-paciente', 'profile-profissional');
-    setUser(null);
-  }).catch(err => console.error('Erro ao deslogar:', err));
-};
-
-  const value = { user, loading, error, setError, login, createPasswordAndLogin, logout };
+  const value = { user, loading, error, setError, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
