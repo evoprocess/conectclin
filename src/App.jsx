@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConfirmProvider } from './contexts/ConfirmContext';
@@ -58,7 +58,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <ConfirmProvider>
-          <BrowserRouter>
+          <HashRouter>
             <ToastContainer />
             <Suspense fallback={<Loading message="Carregando..." />}>
               <Routes>
@@ -108,7 +108,7 @@ function App() {
                 </Route>
               </Routes>
             </Suspense>
-          </BrowserRouter>
+          </HashRouter>
         </ConfirmProvider>
       </ToastProvider>
     </AuthProvider>
