@@ -139,7 +139,7 @@ const Login = () => {
                   setTela('reset');
                 }}
               >
-                Esqueci minha senha1
+                Esqueci minha senha
               </a>
             </div>
 
