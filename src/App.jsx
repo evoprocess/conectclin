@@ -6,6 +6,7 @@ import { ConfirmProvider } from './contexts/ConfirmContext';
 import Loading from './components/Loading';
 import ToastContainer from './components/Toast';
 import RoleRoute from './components/RoleRoute';
+import HomeGeral from './pages/HomeGeral'; // Landing page carregada sem lazy
 
 // ==================== LAZY LOADING ====================
 const Login = lazy(() => import('./pages/Login'));
@@ -39,12 +40,11 @@ const Chat = lazy(() => import('./pages/profissional/Chat'));
 function HomeRedirect() {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando sessão..." />;
-  if (!user) return <Navigate to="/" />;
+  if (!user) return <Navigate to="/login" />;
   switch (user.cargo) {
     case 'paciente':
       return <Navigate to="/paciente/home" replace />;
     case 'nutricionista':
-      return <Navigate to="/profissional/home" replace />;
     case 'psicologo':
       return <Navigate to="/profissional/home" replace />;
     default:
@@ -62,9 +62,14 @@ function App() {
             <ToastContainer />
             <Suspense fallback={<Loading message="Carregando..." />}>
               <Routes>
-                <Route path="/" element={<Login />} />
+                {/* Landing Page (acesso público) */}
+                <Route path="/" element={<HomeGeral />} />
+
+                {/* Login */}
+                <Route path="/login" element={<Login />} />
+
+                {/* Redirecionamento para home do usuário logado */}
                 <Route path="/home" element={<HomeRedirect />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
 
                 {/* Paciente */}
                 <Route
@@ -106,6 +111,9 @@ function App() {
                   <Route path="chat" element={<Chat />} />
                   <Route index element={<Navigate to="/profissional/home" replace />} />
                 </Route>
+
+                {/* Fallback – qualquer rota não mapeada vai para landing */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
           </HashRouter>
