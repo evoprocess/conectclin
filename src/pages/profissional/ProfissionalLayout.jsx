@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import logoImage from '../../assets/logo.png';
+import logoImage from '../../assets/logo.webp';
 
 export default function ProfissionalLayout() {
   const { user, logout } = useAuth();

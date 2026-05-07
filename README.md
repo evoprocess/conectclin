@@ -1,9 +1,45 @@
-## 📘 Documentação do TratamentoWeb – Versão React
+## Resumo das Melhorias Implementadas
+
+Desde o início da migração, evoluímos o sistema com as seguintes entregas:
+
+1. **Migração de JavaScript vanilla para React + Vite**  
+   - Todos os módulos (Login, Home, Anamnese, Plano Alimentar, Cálculo Energético, Shopping Nutri, Cadastro de Clientes, Avaliação Psicológica) foram convertidos para componentes React.
+   - Layouts compartilhados (PacienteLayout, ProfissionalLayout) com menus laterais e top‑bar.
+
+2. **Sistema de Notificações (Toasts)**  
+   - Substituição de todos os `alert()` nativos por toasts visuais não‑bloqueantes.
+   - Criação de `ToastContext` e componente `Toast` com suporte a success, error, warning e info.
+
+3. **Diálogos de Confirmação (Confirm Modal)**  
+   - Substituição dos `confirm()` nativos por um modal estilizado (`ConfirmContext`), com ícone laranja e botões "Cancelar"/"Confirmar".
+
+4. **Persistência do Paciente Selecionado**  
+   - Em todos os módulos profissionais, o paciente escolhido é salvo no `localStorage` e restaurado ao recarregar a página ou navegar entre módulos.
+
+5. **Lazy Loading das Rotas**  
+   - Implementação de `React.lazy()` e `<Suspense>` para carregar cada módulo sob demanda, reduzindo o tempo de carregamento inicial.
+
+6. **Correções de Segurança e Deploy**  
+   - Ajuste das regras do Firestore para permitir leitura no primeiro acesso e nas coleções de gamificação.
+   - Desabilitação do App Check em produção (erro 400) e configuração de secrets no GitHub Actions.
+   - Substituição de `BrowserRouter` por `HashRouter` para evitar erros 404 no GitHub Pages.
+   - Criação do arquivo `404.html` para redirecionamento correto em SPAs.
+
+7. **Ajustes de Estilo e Responsividade**  
+   - Padronização dos cards de informação (`.info‑card`, `.info‑label`, `.info‑value`).
+   - Componente `DatePicker` com máscara `dd/mm/aaaa`, seleção rápida de ano/mês e restrição de datas futuras.
+   - Correção do alinhamento do menu lateral e do botão "X" de fechar modal.
+   - Favicon e título da página corrigidos para produção.
+
+8. **Landing Page (em andamento)**  
+   - Criação da estrutura base da `HomeGeral` com `LandingNavbar`, que servirá como nova página inicial antes do login.
+
+---
+
+## 📘 Documentação do TratamentoWeb – Versão React (ATUALIZADA)
 
 ### 1. Visão Geral
 O **TratamentoWeb** é uma plataforma integrada para nutricionistas, psicólogos e pacientes. Permite o gerenciamento de avaliações, planos alimentares, anamneses, cálculo energético, gamificação (shopping nutri) e acompanhamento psicológico. A versão atual foi migrada de JavaScript vanilla para **React com Vite**, mantendo a mesma identidade visual e funcionalidades.
-
----
 
 ### 2. Stack Tecnológica
 - **React 18** com Hooks e Context API
@@ -14,40 +50,38 @@ O **TratamentoWeb** é uma plataforma integrada para nutricionistas, psicólogos
 - **TensorFlow.js + COCO‑SSD** (IA para desafios de foto)
 - **react‑datepicker + date‑fns** (campos de data)
 - **ImgBB** (upload de imagens)
-- **GitHub Pages** (deploy opcional)
-
----
+- **GitHub Pages** (deploy)
 
 ### 3. Estrutura de Pastas
 ```
 tratamento-web/
 ├── public/
+│   ├── 404.html            # fallback para GitHub Pages
+│   └── icone.ico
 ├── src/
-│   ├── assets/                 # imagens (logo, ícone...)
-│   ├── components/             # DatePicker, ErrorMessage, Loading
-│   ├── contexts/               # AuthContext.jsx
-│   ├── firebase/               # config.js (inicialização, ImgBB)
+│   ├── assets/             # imagens (logo, ícone...)
+│   ├── components/         # DatePicker, Loading, Toast, ErrorMessage, Landing (Navbar, etc.)
+│   ├── contexts/           # AuthContext, ToastContext, ConfirmContext
+│   ├── firebase/           # config.js (inicialização, App Check, ImgBB)
 │   ├── pages/
 │   │   ├── Login.jsx
-│   │   ├── paciente/           # Layout + Home, Anamnese, Plano, Shopping
-│   │   └── profissional/       # Layout + Home (Nutri/Psic), Cadastro, Anamnese, Plano, Cálculo, Av. Psicológica, Shopping, etc.
-│   ├── services/               # iaService.js (TensorFlow)
+│   │   ├── HomeGeral.jsx   # Nova landing page (em construção)
+│   │   ├── paciente/       # Layout + Home, Anamnese, Plano, Shopping
+│   │   └── profissional/   # Layout + Home (Nutri/Psic), Cadastro, Anamnese, Plano, Cálculo, Av. Psicológica, Shopping, etc.
+│   ├── services/           # iaService.js (TensorFlow)
 │   ├── App.jsx
 │   ├── main.jsx
-│   └── index.css               # CSS global (original do projeto)
-├── .env                        # (não versionado) credenciais Firebase
+│   └── index.css           # CSS global
+├── .env.example            # exemplo de variáveis (sem valores reais)
 ├── .gitignore
-├── CNAME                       # domínio customizado (se usado)
+├── CNAME                   # domínio customizado (tratamentoweb.com.br)
 ├── index.html
 ├── package.json
 └── vite.config.js
 ```
 
----
-
 ### 4. Configuração do Ambiente
-Crie um arquivo `.env` na raiz com as variáveis do Firebase:
-
+Copie o arquivo `.env.example` para `.env` e preencha com as credenciais do Firebase. As variáveis são:
 ```
 VITE_FIREBASE_API_KEY=...
 VITE_FIREBASE_AUTH_DOMAIN=...
@@ -57,106 +91,52 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 VITE_APP_CHECK_SITE_KEY=...   # (recaptcha v3)
 ```
-
-O arquivo `src/firebase/config.js` carrega essas variáveis e inicializa os serviços.  
-O **App Check** é habilitado automaticamente.
-
----
+O arquivo `src/firebase/config.js` carrega essas variáveis e inicializa os serviços. O **App Check** é habilitado automaticamente em produção.
 
 ### 5. Autenticação e Contexto Global
 `AuthContext` provê:
 - `user` (dados do usuário logado)
-- `login(login, senha, lembrar)`
-- `createPasswordAndLogin(tempData, novaSenha)`
+- `login(login, senha, lembrar)` – suporta primeiro acesso automático (cria conta no Firebase Auth)
 - `logout()`
 - `loading`, `error`
 
-O fluxo de primeiro acesso (paciente com código temporário) é totalmente suportado.
-
----
-
 ### 6. Rotas e Layouts
-Definidas em `App.jsx`:
-
-- `/` → `Login`
+Definidas em `App.jsx` com **HashRouter** (para compatibilidade com GitHub Pages) e **lazy loading**.
+- `/` → `HomeGeral` (landing page)  
+- `/login` → `Login`
 - `/home` → redireciona conforme cargo
-- `/paciente/*` → usa `PacienteLayout` (header + menu lateral)
-  - `home`, `anamnese`, `plano-alimentar`, `shopping`
-- `/profissional/*` → usa `ProfissionalLayout` (top‑bar + menu lateral)
-  - `home` (condicional para nutricionista/psicólogo)
-  - `clientes`, `anamnese`, `plano-alimentar`, `calculo-energetico`
-  - `avaliacao-psicologica`, `prontuario`
-  - `shopping`, `atendimento-grupo`, `agendamentos`, `jornadas`, `palestras`, `chat`
-
-Os layouts aplicam automaticamente as classes CSS `profile-paciente` ou `profile-profissional` ao `<body>`.
-
----
+- `/paciente/*` → `PacienteLayout` (header + menu lateral)
+- `/profissional/*` → `ProfissionalLayout` (top‑bar + menu lateral)
 
 ### 7. Estilização
 - **CSS global** (`index.css`) contém todas as regras do projeto original (variáveis, login, cards, tabelas, menu lateral, modais, responsivo).
 - Classes condicionais no `<body>` definem temas diferentes.
-- Bootstrap foi mantido para estrutura básica (grid, formulários), mas a identidade visual é preservada.
-- Os estilos do calendário (`react-datepicker`) e do cadastro de clientes foram adicionados no mesmo arquivo.
-
----
+- Bootstrap foi mantido para estrutura básica, mas a identidade visual é preservada.
 
 ### 8. Funcionalidades Principais
-#### Área do Paciente
-- **Home**: dados pessoais, profissionais vinculados, histórico de avaliações, gráficos (membros).
-- **Minha Anamnese**: visualização completa/resumo dos dados nutricionais.
-- **Meu Plano Alimentar**: refeições do dia, orientações e restrições.
-- **Shopping Nutri**: gamificação com pontos, níveis, roleta da sorte, desafios simples e com foto (câmera + IA + upload ImgBB), loja de troca e histórico de transações.
-
-#### Área do Profissional (Nutricionista/Psicólogo)
-- **Home**: seletor de paciente, dados pessoais, gráficos de evolução, filtro por período, nota de avaliação (nutricional ou psicológica).
-- **Cadastro de Clientes**: tabela com busca, filtros, ações (detalhes, editar, desvincular, código de acesso, reset de senha, suspender/ativar). Somente gerentes podem cadastrar.
-- **Anamnese**: formulário completo (histórico clínico, alimentar, antropometria, composição corporal, exames, estilo de vida) com salvamento no Firestore.
-- **Plano Alimentar**: seis refeições e campos extras (orientações, restrições, objetivos).
-- **Cálculo Energético**: múltiplas fórmulas (Harris-Benedict, Mifflin, etc.), ajuste por objetivo, distribuição de macros (proteínas, carboidratos, lipídios) e resumo colorido.
-- **Avaliação Psicológica**: escalas de 0‑10 (ansiedade, depressão, estresse, sono) e gráfico de evolução.
-- **Shopping Nutri (Profissional)**: revisão de fotos enviadas pelos pacientes (aprovar/reprovar) e gerenciamento da loja de itens.
-
----
+*(mesmo conteúdo anterior, apenas acrescentar a nova landing page)*
+- **Landing Page (Nova)**: apresentação institucional com carrossel de comunicados, parceiros e acesso ao login.
 
 ### 9. Serviços de IA
-`src/services/iaService.js` carrega o modelo **COCO‑SSD** (TensorFlow.js) para classificar imagens dos desafios.  
-Funções:
-- `carregarModeloIA(onProgress)`
-- `analisarImagemComIA(base64, categoria)`
-- `isModeloCarregado()`
-
-O upload das fotos é feito via **ImgBB** (chave armazenada no Firestore em `config/api`).
-
----
+*(mantido)*
 
 ### 10. Componentes Reutilizáveis
-- **DatePicker** (`src/components/DatePicker.jsx`): campo de data com máscara `dd/mm/aaaa`, calendário centralizado, seleção rápida de ano/mês, restrição opcional de data máxima.
-- **ErrorMessage** (`src/components/ErrorMessage.jsx`): exibe erros com ícone.
-- **Loading** (`src/components/Loading.jsx`): spinner CSS.
-
----
+- **DatePicker** com máscara e restrição de datas.
+- **Toast** (notificações).
+- **ConfirmDialog** (modais de confirmação).
+- **Loading** (spinner centralizado).
 
 ### 11. Como Rodar o Projeto
 ```bash
 npm install
 npm run dev
 ```
-Acesse `http://localhost:5173` no navegador.
-
----
 
 ### 12. Build e Deploy
-Para gerar a versão de produção:
-```bash
-npm run build
-```
-Os arquivos estáticos serão gerados na pasta `dist/`.  
-Se estiver usando GitHub Pages com domínio customizado, o arquivo `CNAME` será copiado automaticamente.
-
----
+O deploy é feito via **GitHub Actions** (`.github/workflows/deploy.yml`), que injeta as secrets e publica no GitHub Pages. Não é necessário commitar o arquivo `.env`.
 
 ### 13. Pontos de Atenção
 - O cadastro de pacientes restringe **datas futuras** com a prop `maxDate={new Date()}`.
-- Apenas perfis **gerente** podem cadastrar novos clientes (botão "Novo Cliente" fica desabilitado para outros).
-- O **Shopping Nutri** depende da chave do ImgBB no Firestore (`config/api`) e do modelo TensorFlow.js (carregamento assíncrono). Caso a IA não esteja disponível, a foto é enviada para análise manual.
-- Todos os módulos que ainda não foram implementados exibem um placeholder de "Em desenvolvimento".
+- Apenas perfis **gerente** podem cadastrar novos clientes.
+- O **Shopping Nutri** depende da chave do ImgBB no Firestore (`config/api`) e do modelo TensorFlow.js.
+- A nova landing page ainda está em desenvolvimento e substituirá a tela de login como página inicial.
