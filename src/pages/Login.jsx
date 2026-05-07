@@ -75,7 +75,7 @@ const Login = ({ inModal = false }) => {
   const renderLogo = () => (
     <div className="login-header">
       <div className="logo-container">
-        <img src={logoImage} alt="TratamentoWeb" className="login-logo-img" />
+        <img src={logoImage} alt="ConectClin" className="login-logo-img" />
       </div>
     </div>
   );
