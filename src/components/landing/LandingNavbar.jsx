@@ -20,12 +20,6 @@ export default function LandingNavbar() {
       >
         <div className="d-flex align-items-center gap-3">
           <img src={logoImage} alt="ConectClin Logo" style={{ height: 40, width: 'auto' }} />
-          <span
-            className="fw-bold fs-5"
-            style={{ fontFamily: "'Poppins', sans-serif", color: '#1a1a1a' }}
-          >
-            ConectClin
-          </span>
         </div>
 
         <button
