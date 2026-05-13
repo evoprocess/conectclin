@@ -23,17 +23,22 @@ export default function ProfissionalLayout() {
       ? 'Sistema Nutricional'
       : user.cargo === 'psicologo'
       ? 'Sistema Psicológico'
+      : user.cargo === 'recepcionista'
+      ? 'Sistema de Recepção'
       : 'TratamentoWeb';
 
-  // ✅ MENU SIMPLIFICADO - Apenas 3 itens
+  // ✅ MENU DINÂMICO baseado no cargo
   const menuItems = () => {
     const items = [];
 
-    // 1. Prontuário (antes era Home)
-    items.push({ path: '/profissional/home', icon: '📋', label: 'Prontuário' });
-
-    // 2. Cadastro de Pacientes (antes era Clientes)
-    items.push({ path: '/profissional/clientes', icon: '👥', label: 'Cadastro de Pacientes' });
+    if (user.cargo === 'recepcionista') {
+      // Recepcionista vê apenas Cadastro de Pacientes
+      items.push({ path: '/profissional/clientes', icon: '👥', label: 'Cadastro de Pacientes' });
+    } else {
+      // Nutricionista e Psicólogo vêem os dois itens
+      items.push({ path: '/profissional/home', icon: '📋', label: 'Prontuário' });
+      items.push({ path: '/profissional/clientes', icon: '👥', label: 'Cadastro de Pacientes' });
+    }
 
     return items;
   };

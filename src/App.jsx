@@ -21,7 +21,7 @@ const PacienteAnamnese = lazy(() => import('./pages/paciente/PacienteAnamnese'))
 const PacientePlanoAlimentar = lazy(() => import('./pages/paciente/PacientePlanoAlimentar'));
 const ShoppingNutriCliente = lazy(() => import('./pages/paciente/ShoppingNutriCliente'));
 
-// Profissional - APENAS os que serão usados
+// Profissional
 const HomeNutricionista = lazy(() => import('./pages/profissional/HomeNutricionista'));
 const CadastroCliente = lazy(() => import('./pages/profissional/CadastroCliente'));
 
@@ -30,9 +30,12 @@ function HomeRedirect() {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando sessão..." />;
   if (!user) return <Navigate to="/login" />;
+  
   switch (user.cargo) {
     case 'paciente':
       return <Navigate to="/paciente/home" replace />;
+    case 'recepcionista':
+      return <Navigate to="/profissional/clientes" replace />;
     case 'nutricionista':
     case 'psicologo':
       return <Navigate to="/profissional/home" replace />;
@@ -76,11 +79,11 @@ function App() {
                   <Route path="shopping" element={<ShoppingNutriCliente />} />
                 </Route>
 
-                {/* Profissionais - APENAS Prontuário e Cadastro de Pacientes */}
+                {/* Profissionais e Recepcionista */}
                 <Route
                   path="/profissional"
                   element={
-                    <RoleRoute allowedRoles={['nutricionista', 'psicologo']}>
+                    <RoleRoute allowedRoles={['nutricionista', 'psicologo', 'recepcionista']}>
                       <ProfissionalLayout />
                     </RoleRoute>
                   }
