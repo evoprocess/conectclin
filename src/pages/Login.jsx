@@ -31,15 +31,10 @@ const Login = ({ inModal = false }) => {
     }
   }, []);
 
-  // Redirecionamento se já logado (ATUALIZADO para incluir recepcionista)
+  // Redirecionamento se já logado
   useEffect(() => {
     if (user) {
-      // Redireciona baseado no cargo
-      if (user.cargo === 'recepcionista') {
-        navigate('/profissional/clientes', { replace: true });
-      } else {
-        navigate('/home', { replace: true });
-      }
+      navigate('/home', { replace: true });
     }
   }, [user, navigate]);
 
