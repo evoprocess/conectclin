@@ -21,9 +21,20 @@ const PacienteAnamnese = lazy(() => import('./pages/paciente/PacienteAnamnese'))
 const PacientePlanoAlimentar = lazy(() => import('./pages/paciente/PacientePlanoAlimentar'));
 const ShoppingNutriCliente = lazy(() => import('./pages/paciente/ShoppingNutriCliente'));
 
-// Profissional (apenas os que serão usados)
-const HomeNutricionista = lazy(() => import('./pages/profissional/HomeNutricionista'));
+// Profissional
+const ProfissionalHome = lazy(() => import('./pages/profissional/ProfissionalHome'));
 const CadastroCliente = lazy(() => import('./pages/profissional/CadastroCliente'));
+const AnamneseNutricionista = lazy(() => import('./pages/profissional/AnamneseNutricionista'));
+const PlanoAlimentarNutricionista = lazy(() => import('./pages/profissional/PlanoAlimentarNutricionista'));
+const CalculoEnergeticoNutricionista = lazy(() => import('./pages/profissional/CalculoEnergeticoNutricionista'));
+const AvaliacaoPsicologica = lazy(() => import('./pages/profissional/AvaliacaoPsicologica'));
+const ProntuarioPsicologico = lazy(() => import('./pages/profissional/ProntuarioPsicologico'));
+const AtendimentoGrupo = lazy(() => import('./pages/profissional/AtendimentoGrupo'));
+const Agendamentos = lazy(() => import('./pages/profissional/Agendamentos'));
+const Jornadas = lazy(() => import('./pages/profissional/Jornadas'));
+const Palestras = lazy(() => import('./pages/profissional/Palestras'));
+const ShoppingNutriNutricionista = lazy(() => import('./pages/profissional/ShoppingNutriNutricionista'));
+const Chat = lazy(() => import('./pages/profissional/Chat'));
 
 // ==================== COMPONENTES DE ROTA ====================
 function HomeRedirect() {
@@ -76,7 +87,7 @@ function App() {
                   <Route path="shopping" element={<ShoppingNutriCliente />} />
                 </Route>
 
-                {/* Profissionais - APENAS Prontuário e Cadastro de Pacientes */}
+                {/* Profissionais */}
                 <Route
                   path="/profissional"
                   element={
@@ -85,8 +96,19 @@ function App() {
                     </RoleRoute>
                   }
                 >
-                  <Route path="home" element={<HomeNutricionista />} />
+                  <Route path="home" element={<ProfissionalHome />} />
                   <Route path="clientes" element={<CadastroCliente />} />
+                  <Route path="anamnese" element={<AnamneseNutricionista />} />
+                  <Route path="plano-alimentar" element={<PlanoAlimentarNutricionista />} />
+                  <Route path="calculo-energetico" element={<CalculoEnergeticoNutricionista />} />
+                  <Route path="avaliacao-psicologica" element={<AvaliacaoPsicologica />} />
+                  <Route path="prontuario" element={<ProntuarioPsicologico />} />
+                  <Route path="atendimento-grupo" element={<AtendimentoGrupo />} />
+                  <Route path="shopping" element={<ShoppingNutriNutricionista />} />
+                  <Route path="agendamentos" element={<Agendamentos />} />
+                  <Route path="jornadas" element={<Jornadas />} />
+                  <Route path="palestras" element={<Palestras />} />
+                  <Route path="chat" element={<Chat />} />
                   <Route index element={<Navigate to="/profissional/home" replace />} />
                 </Route>
 
