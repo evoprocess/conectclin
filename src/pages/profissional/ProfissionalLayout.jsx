@@ -25,30 +25,15 @@ export default function ProfissionalLayout() {
       ? 'Sistema Psicológico'
       : 'TratamentoWeb';
 
-  // Itens de menu baseados no cargo
+  // ✅ MENU SIMPLIFICADO - Apenas 3 itens
   const menuItems = () => {
     const items = [];
 
-    items.push({ path: '/profissional/home', icon: '🏠', label: 'Home' });
+    // 1. Prontuário (antes era Home)
+    items.push({ path: '/profissional/home', icon: '📋', label: 'Prontuário' });
 
-    if (user.cargo === 'nutricionista') {
-      items.push({ path: '/profissional/anamnese', icon: '📋', label: 'Anamnese' });
-      items.push({ path: '/profissional/plano-alimentar', icon: '🍽️', label: 'Plano Alimentar' });
-      items.push({ path: '/profissional/calculo-energetico', icon: '🧮', label: 'Cálculo Energético' });
-    }
-
-    if (user.cargo === 'psicologo') {
-      items.push({ path: '/profissional/avaliacao-psicologica', icon: '🧠', label: 'Avaliação Psicológica' });
-      items.push({ path: '/profissional/prontuario', icon: '📝', label: 'Prontuário' });
-    }
-
-    items.push({ path: '/profissional/shopping', icon: '🛍️', label: 'Shopping Nutri' });
-    items.push({ path: '/profissional/clientes', icon: '👥', label: 'Clientes' });
-    items.push({ path: '/profissional/atendimento-grupo', icon: '👥', label: 'Atendimento em Grupo' });
-    items.push({ path: '/profissional/agendamentos', icon: '📅', label: 'Agendamentos' });
-    items.push({ path: '/profissional/jornadas', icon: '🌟', label: 'Acompanhar Jornadas' });
-    items.push({ path: '/profissional/palestras', icon: '🎥', label: 'Palestras' });
-    items.push({ path: '/profissional/chat', icon: '💬', label: 'Chat' });
+    // 2. Cadastro de Pacientes (antes era Clientes)
+    items.push({ path: '/profissional/clientes', icon: '👥', label: 'Cadastro de Pacientes' });
 
     return items;
   };
