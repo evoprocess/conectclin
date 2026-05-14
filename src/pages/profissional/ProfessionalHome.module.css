@@ -577,7 +577,7 @@
   }
 }
 
-/* ========== MODAIS PLACEHOLDER ========== */
+/* ========== MODAIS PLACEHOLDER (inclui confirmação de logout) ========== */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -647,6 +647,7 @@
   margin-bottom: 1.5rem;
 }
 
+/* Botão padrão (Entendi) */
 .modalActionBtn {
   background: linear-gradient(135deg, #0284c7, #0ea5e9);
   border: none;
@@ -663,4 +664,46 @@
 .modalActionBtn:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+}
+
+/* Container para os dois botões do logout */
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Botão Cancelar */
+.modalCancelBtn {
+  background: #e2e8f0;
+  border: none;
+  color: #475569;
+  padding: 0.7rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalCancelBtn:hover {
+  background: #cbd5e1;
+}
+
+/* Botão Confirmar (Sair) */
+.modalConfirmBtn {
+  background: #dc2626;
+  border: none;
+  color: white;
+  padding: 0.7rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.modalConfirmBtn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
 }

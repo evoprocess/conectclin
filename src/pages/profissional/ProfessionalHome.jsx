@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import Loading from '../../components/Loading';
 import logoImg from '../../assets/logo.webp';
 import styles from './ProfessionalHome.module.css';
 
@@ -77,16 +78,34 @@ const MiniCalendar = () => {
 const ProfessionalHome = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null); // controla qual modal está aberto
+  const [loading, setLoading] = useState(true);
+
   const { user, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const [activeModal, setActiveModal] = useState(null);
+
+  // Monitora o usuário: ao deslogar, redireciona
+  useEffect(() => {
+    if (!user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // Simula carregamento dos dados do Firestore
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
       showToast('Logout realizado com sucesso', 'success');
-      navigate('/');
+      setActiveModal(null);
+      // O redirecionamento é feito pelo useEffect acima
     } catch (error) {
       showToast('Erro ao sair', 'error');
     }
@@ -111,10 +130,8 @@ const ProfessionalHome = () => {
     { id: 3, patient: 'Paula Fernandes', date: '2026-05-16 11:00', type: 'Retorno', status: 'Pendente de confirmação' },
   ];
 
-  // Consultas de hoje (mock: 15 de maio)
   const consultasHoje = agendamentos.filter(a => a.date.startsWith('2026-05-15'));
 
-  // Pendências para badge no menu
   const pendentesCount =
     acompanhamentos.filter(a => a.status === 'Pendente').length +
     agendamentos.filter(a => a.status === 'Pendente de confirmação').length;
@@ -125,8 +142,17 @@ const ProfessionalHome = () => {
     { label: 'Cadastro de Pacientes', icon: '👤', action: () => { setMenuOpen(false); } },
   ];
 
-  // NOVO: fechar modal
   const closeModal = () => setActiveModal(null);
+
+  if (loading) {
+    return (
+      <div className={styles.pageWrapper}>
+        <Loading message="Carregando painel..." />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className={styles.pageWrapper}>
@@ -135,17 +161,13 @@ const ProfessionalHome = () => {
 
       {/* Menu lateral retrátil */}
       <div className={`${styles.sideMenu} ${menuOpen ? styles.sideMenuOpen : ''}`}>
-        <button className={styles.closeMenuBtnAbsolute} onClick={() => setMenuOpen(false)}>
-          ✕
-        </button>
+        <button className={styles.closeMenuBtnAbsolute} onClick={() => setMenuOpen(false)}>✕</button>
         <nav className={styles.menuNav}>
           {menuItems.map((item, idx) => (
             <button key={idx} className={styles.menuItem} onClick={item.action}>
               <span className={styles.menuIcon}>{item.icon}</span>
               {item.label}
-              {item.badge > 0 && (
-                <span className={styles.menuBadge}>{item.badge}</span>
-              )}
+              {item.badge > 0 && <span className={styles.menuBadge}>{item.badge}</span>}
             </button>
           ))}
         </nav>
@@ -153,31 +175,21 @@ const ProfessionalHome = () => {
 
       {/* Conteúdo empurrado pelo menu */}
       <div className={`${styles.contentPush} ${menuOpen ? styles.contentPushOpen : ''}`}>
-        {/* Navbar profissional */}
         <nav className={styles.navbar}>
           <div className={styles.navLeft}>
-            <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>
-              ☰
-            </button>
+            <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
             <img src={logoImg} alt="ConectClin" className={styles.logo} />
           </div>
           <div className={styles.navCenter}>
             <div className={styles.searchWrapper}>
               <span className={styles.searchIcon}>🔍</span>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="Buscar paciente por nome ou CPF..."
-              />
+              <input type="text" className={styles.searchInput} placeholder="Buscar paciente por nome ou CPF..." />
             </div>
           </div>
           <div className={styles.navRight}>
             <div className={styles.notificationWrapper}>
-              <button className={styles.notificationBell} onClick={() => setNotificationsOpen(!notificationsOpen)}>
-                🔔
-                {notifications.length > 0 && (
-                  <span className={styles.notificationBadge}>{notifications.length}</span>
-                )}
+              <button className={styles.notificationBell} onClick={() => setNotificationsOpen(!notificationsOpen)}>🔔
+                {notifications.length > 0 && <span className={styles.notificationBadge}>{notifications.length}</span>}
               </button>
               {notificationsOpen && (
                 <div className={styles.notificationDropdown}>
@@ -196,30 +208,25 @@ const ProfessionalHome = () => {
                 </div>
               )}
             </div>
-            <span className={styles.userInfo}>
-              {user?.nome || 'Profissional'} | {user?.cargo || 'Cargo'}
-            </span>
-            <button onClick={handleLogout} className={styles.logoutBtn}>Sair</button>
+            <span className={styles.userInfo}>{user?.nome || 'Profissional'} | {user?.cargo || 'Cargo'}</span>
+            {/* Botão Sair agora abre o modal de confirmação */}
+            <button onClick={() => setActiveModal('logout')} className={styles.logoutBtn}>Sair</button>
           </div>
         </nav>
 
-        {/* Conteúdo principal */}
         <div className={styles.mainContent}>
           <div className={styles.header}>
             <h2 className={styles.greeting}>Bem-vindo(a), {user?.nome?.split(' ')[0] || 'Profissional'}!</h2>
             <p className={styles.subtitle}>Painel do profissional de saúde</p>
           </div>
 
-          {/* Botões de ação rápida */}
           <div className={styles.quickActions}>
             <button className={styles.actionBtn} onClick={() => setActiveModal('consulta')}><span className={styles.actionIcon}>➕</span> Nova Consulta</button>
             <button className={styles.actionBtn} onClick={() => setActiveModal('paciente')}><span className={styles.actionIcon}>👤</span> Cadastrar Paciente</button>
             <button className={styles.actionBtn} onClick={() => setActiveModal('prontuario')}><span className={styles.actionIcon}>📋</span> Abrir Prontuário</button>
           </div>
 
-          {/* Dashboard: três colunas (Consultas, Acompanhamentos, Calendário) */}
           <div className={styles.dashboardGrid}>
-            {/* Consultas de Hoje */}
             <div className={styles.dashboardCard}>
               <h3 className={styles.dashboardCardTitle}>📅 Consultas de Hoje</h3>
               {consultasHoje.length > 0 ? (
@@ -228,9 +235,7 @@ const ProfessionalHome = () => {
                     <div className={styles.consultaPatient}>{c.patient}</div>
                     <div className={styles.consultaTime}>{c.date.split(' ')[1]}</div>
                     <div className={styles.consultaType}>{c.type}</div>
-                    <span className={`${styles.statusBadge} ${styles[c.status.toLowerCase().replace(/\s/g, '')]}`}>
-                      {c.status}
-                    </span>
+                    <span className={`${styles.statusBadge} ${styles[c.status.toLowerCase().replace(/\s/g, '')]}`}>{c.status}</span>
                   </div>
                 ))
               ) : (
@@ -238,7 +243,6 @@ const ProfessionalHome = () => {
               )}
             </div>
 
-            {/* Acompanhamentos */}
             <div className={styles.dashboardCard}>
               <h3 className={styles.dashboardCardTitle}>🔄 Pacientes em Acompanhamento</h3>
               {acompanhamentos.map(p => (
@@ -248,14 +252,11 @@ const ProfessionalHome = () => {
                     <div className={styles.patientName}>{p.patient}</div>
                     <div className={styles.patientLastUpdate}>Última: {p.lastUpdate}</div>
                   </div>
-                  <span className={`${styles.statusBadge} ${styles[p.status.toLowerCase().replace(/\s/g, '')]}`}>
-                    {p.status}
-                  </span>
+                  <span className={`${styles.statusBadge} ${styles[p.status.toLowerCase().replace(/\s/g, '')]}`}>{p.status}</span>
                 </div>
               ))}
             </div>
 
-            {/* Mini Calendário */}
             <div className={styles.dashboardCard}>
               <h3 className={styles.dashboardCardTitle}>🗓️ Agenda</h3>
               <MiniCalendar />
@@ -263,38 +264,54 @@ const ProfessionalHome = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <footer className={styles.footer}>
           <p>© 2026 ConectClin. Todos os direitos reservados.</p>
         </footer>
       </div>
-      {/* ========== NOVO: MODAIS PLACEHOLDER ========== */}
+
+      {/* ========== MODAIS ========== */}
       {activeModal && (
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={closeModal}>✕</button>
+
             {activeModal === 'consulta' && (
               <>
                 <h3 className={styles.modalTitle}>➕ Nova Consulta</h3>
                 <p className={styles.modalText}>Funcionalidade em desenvolvimento. Aqui você poderá agendar uma nova consulta com um paciente.</p>
+                <button className={styles.modalActionBtn} onClick={closeModal}>Entendi</button>
               </>
             )}
+
             {activeModal === 'paciente' && (
               <>
                 <h3 className={styles.modalTitle}>👤 Cadastrar Paciente</h3>
                 <p className={styles.modalText}>Funcionalidade em desenvolvimento. Em breve será possível cadastrar novos pacientes no sistema.</p>
+                <button className={styles.modalActionBtn} onClick={closeModal}>Entendi</button>
               </>
             )}
+
             {activeModal === 'prontuario' && (
               <>
                 <h3 className={styles.modalTitle}>📋 Abrir Prontuário</h3>
                 <p className={styles.modalText}>Funcionalidade em desenvolvimento. Aqui você acessará o prontuário completo dos pacientes.</p>
+                <button className={styles.modalActionBtn} onClick={closeModal}>Entendi</button>
               </>
             )}
-            <button className={styles.modalActionBtn} onClick={closeModal}>Entendi</button>
+
+            {activeModal === 'logout' && (
+              <>
+                <h3 className={styles.modalTitle}>Sair do sistema</h3>
+                <p className={styles.modalText}>Tem certeza que deseja sair? Você será redirecionado para a tela inicial.</p>
+                <div className={styles.modalActions}>
+                  <button className={styles.modalCancelBtn} onClick={closeModal}>Cancelar</button>
+                  <button className={styles.modalConfirmBtn} onClick={handleLogout}>Sair</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-        )}
+      )}
     </div>
   );
 };

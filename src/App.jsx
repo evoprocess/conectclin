@@ -11,12 +11,24 @@ import HomeGeral from './pages/HomeGeral'; // Landing page carregada sem lazy
 const ProfessionalHome = lazy(() => import('./pages/profissional/ProfessionalHome'));
 
 // ==================== COMPONENTES DE ROTA ====================
+
 function HomeRedirect() {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando sessão..." />;
   if (!user) return <Navigate to="/" replace />; // Modal de login na landing
   // Apenas profissionais têm acesso à nova home
   return <Navigate to="/profissional/home" replace />;
+}
+
+// Componente que protege a rota profissional
+function ProtectedProfessionalRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <Loading message="Verificando sessão..." />;
+  if (!user) return <Navigate to="/" replace />;
+  if (user.cargo !== 'nutricionista' && user.cargo !== 'psicologo') {
+    return <Navigate to="/" replace />;
+  }
+  return <ProfessionalHome />;
 }
 
 // ==================== APP PRINCIPAL ====================
@@ -36,7 +48,7 @@ function App() {
                 <Route path="/home" element={<HomeRedirect />} />
 
                 {/* Home do Profissional */}
-                <Route path="/profissional/home" element={<ProfessionalHome />} />
+                <Route path="/profissional/home" element={<ProtectedProfessionalRoute />} />
 
                 {/* Fallback – qualquer rota não mapeada vai para landing */}
                 <Route path="*" element={<Navigate to="/" replace />} />
