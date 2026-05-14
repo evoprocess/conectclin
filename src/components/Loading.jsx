@@ -5,9 +5,10 @@ export default function Loading({ message = "Carregando..." }) {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '60vh',
+      minHeight: '100vh',          // altura total da viewport para cobrir o fundo azul
       gap: '16px',
       color: '#475569',
+      backgroundColor: '#ffffff',  // fundo branco explícito
       fontFamily: "'Segoe UI', 'Poppins', sans-serif"
     }}>
       <div className="loading" />
