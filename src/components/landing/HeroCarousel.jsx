@@ -120,7 +120,7 @@ export default function HeroCarousel() {
           className="fw-bold mb-2"
           style={{ fontFamily: 'Poppins, sans-serif', color: '#1a1a1a' }}
         >
-          Onde a saúde se conecta e o cuidado é personalizado.
+          Onde a saúde se conecta e o cuidado é personalizado1.
         </h1>
         <p className="text-secondary mb-4">
           Faça parte do nosso time. Acesse o portal de saúde mais inovador do mercado e transforme a maneira como você cuida da sua saúde.
