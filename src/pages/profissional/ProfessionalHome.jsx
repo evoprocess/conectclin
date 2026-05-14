@@ -208,7 +208,7 @@ const ProfessionalHome = () => {
                 </div>
               )}
             </div>
-            <span className={styles.userInfo}>{user?.nome || 'Profissional'} | {user?.cargo || 'Cargo'}</span>
+            <span className={styles.userInfo}>{user?.nome ? (() => { const partes = user.nome.trim().split(' '); return partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0]; })() : 'Profissional'} | {user?.cargo || 'Cargo'}</span>
             {/* Botão Sair agora abre o modal de confirmação */}
             <button onClick={() => setActiveModal('logout')} className={styles.logoutBtn}>Sair</button>
           </div>

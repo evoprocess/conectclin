@@ -552,28 +552,184 @@
   margin-top: auto;
 }
 
-/* ---------- RESPONSIVIDADE ---------- */
-@media (max-width: 768px) {
+/* ---------- RESPONSIVIDADE (Mobile First) ---------- */
+
+/* Mobile (até 640px) */
+@media (max-width: 640px) {
   .navbar {
     flex-direction: column;
     align-items: stretch;
+    padding: 0.6rem 1rem;
   }
+
+  .navLeft {
+    justify-content: space-between;
+    width: 100%;
+  }
+
   .navCenter {
     max-width: 100%;
     order: 1;
+    margin-top: 0.5rem;
   }
+
+  .navRight {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;            /* permite quebra de linha */
+    justify-content: flex-end;  /* alinha tudo à direita */
+    align-items: center;
+    gap: 0.6rem;
+    order: 2;
+    margin-top: 0.5rem;
+  }
+
+  /* Mantém sino e nome na mesma linha */
+  .notificationWrapper {
+    order: 1;
+  }
+
+  .userInfo {
+    order: 2;
+    text-align: right;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .logoutBtn {
+    order: 3;                  /* vai para a próxima linha */
+    width: auto;               /* NÃO ocupa toda a largura */
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    margin-left: auto;         /* empurra para a direita */
+  }
+
+  .mainContent {
+    padding: 1rem;
+  }
+
+  .greeting {
+    font-size: 1.4rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
   .quickActions {
-    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
   }
+
   .actionBtn {
-    flex: 1 1 auto;
     justify-content: center;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
   }
+
   .dashboardGrid {
     grid-template-columns: 1fr;
   }
+
   .contentPushOpen {
-    margin-left: 0; /* Em mobile, o menu cobre o conteúdo, não empurra */
+    margin-left: 0;
+  }
+
+  .sideMenu {
+    width: 260px;
+  }
+
+  .notificationDropdown {
+    width: 280px;
+    right: -50px;
+  }
+
+  .dashboardCard {
+    overflow-y: auto;
+    max-height: 450px;
+  }
+
+  .miniCalendar {
+    min-width: 260px;
+  }
+}
+
+/* Telas muito pequenas (ex.: iPhone SE, 375px) */
+@media (max-width: 380px) {
+  .logo {
+    height: 28px;
+  }
+
+  .hamburger {
+    font-size: 1.3rem;
+  }
+
+  .notificationBell {
+    font-size: 1.2rem;
+  }
+
+  .userInfo {
+    font-size: 0.75rem;
+  }
+
+  .logoutBtn {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  .searchInput {
+    font-size: 0.8rem;
+  }
+}
+
+/* Tablet (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .mainContent {
+    padding: 1.5rem;
+  }
+
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+  }
+
+  .quickActions {
+    gap: 0.8rem;
+  }
+
+  .actionBtn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  /* Calendário pode ter altura maior */
+  .dashboardCard {
+    overflow-y: auto;
+    max-height: 500px;
+  }
+}
+
+/* Desktop (1025px - 1536px) */
+@media (min-width: 1025px) and (max-width: 1536px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large (1537px+) */
+@media (min-width: 1537px) {
+  .mainContent {
+    max-width: 1600px;
+  }
+
+  .dashboardGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .greeting {
+    font-size: 2.5rem;
   }
 }
 
