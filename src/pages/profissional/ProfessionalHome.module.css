@@ -1,12 +1,12 @@
 .pageWrapper {
-  min-height: 100vh;
+  height: 100vh;
   background: #ffffff;
   display: flex;
   flex-direction: column;
   color: #1e293b;
   font-family: 'Segoe UI', 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
-  overflow-x: hidden; /* evita barra horizontal durante animação do menu */
+  overflow: hidden;
 }
 
 /* Overlay */
@@ -109,6 +109,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .contentPushOpen {
@@ -486,6 +488,7 @@
 /* ---------- MINI CALENDÁRIO ---------- */
 .miniCalendar {
   width: 100%;
+  min-height: 0;        /* permite encolher */
 }
 
 .calendarHeader {
@@ -513,16 +516,18 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.65rem;         /* era 0.7rem */
   color: #94a3b8;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
   font-weight: 500;
+  gap: 0;                     /* elimina qualquer gap extra */
 }
 
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 1px;             /* mínimo para separar os números */
+  flex-shrink: 1;       /* permite encolher se necessário */
 }
 
 .calendarDay {
@@ -530,15 +535,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
   cursor: default;
+  padding: 0;
+  min-width: 0;         /* essencial para permitir redução */
 }
 
 .calendarToday {
   background: #0284c7;
   color: white;
   font-weight: 700;
+  border-radius: 50%;         /* destaque circular */
 }
 
 /* ---------- FOOTER ---------- */
@@ -617,15 +625,16 @@
   }
 
   .quickActions {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .actionBtn {
+    flex-wrap: wrap;
     justify-content: center;
-    width: 100%;
-    padding: 0.6rem 1rem;
+    gap: 0.6rem;
+  }
+  .actionBtn {
+    width: auto;          /* tamanho conforme conteúdo */
+    flex: 0 0 auto;
+    padding: 0.5rem 1.2rem;
     font-size: 0.85rem;
+    white-space: nowrap;
   }
 
   .dashboardGrid {
@@ -643,11 +652,6 @@
   .notificationDropdown {
     width: 280px;
     right: -50px;
-  }
-
-  .dashboardCard {
-    overflow-y: auto;
-    max-height: 450px;
   }
 
   .miniCalendar {
@@ -722,12 +726,10 @@
   .mainContent {
     max-width: 1600px;
   }
-
   .dashboardGrid {
     grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
   }
-
   .greeting {
     font-size: 2.5rem;
   }
