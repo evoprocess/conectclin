@@ -16,8 +16,8 @@ import {
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-// ===== CORREÇÃO: adicionado 'recepcionista' =====
-const CARGOS_VALIDOS = ['paciente', 'nutricionista', 'psicologo', 'recepcionista'];
+// ===== CARGOS VÁLIDOS (inclui gestor) =====
+const CARGOS_VALIDOS = ['paciente', 'nutricionista', 'psicologo', 'recepcionista', 'gestor'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -76,6 +76,7 @@ export function AuthProvider({ children }) {
       }
 
       const isPaciente = userData.cargo === 'paciente';
+      const isGestor = userData.cargo === 'gestor';
       const hasPrimeiroAcesso = userData.hasOwnProperty('ultimo_login');
 
       if (isPaciente && !hasPrimeiroAcesso) {
@@ -88,7 +89,8 @@ export function AuthProvider({ children }) {
         ...userData,
         login: loginInput,
         email: emailMontado,
-        perfil: userData.perfil || (isPaciente ? 'operador' : 'supervisor'),
+        // Gestor sempre tem perfil 'gerente'
+        perfil: userData.perfil || (isPaciente ? 'operador' : isGestor ? 'gerente' : 'supervisor'),
       };
 
       if (remember) {
@@ -108,6 +110,7 @@ export function AuthProvider({ children }) {
       if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password') {
         setError('Login ou senha incorretos!');
       } else if (authError.code === 'auth/user-not-found') {
+        // ========== PRIMEIRO ACESSO ==========
         try {
           const userRef = doc(db, 'logins', loginInput);
           const userDoc = await getDoc(userRef);
@@ -118,11 +121,46 @@ export function AuthProvider({ children }) {
           }
 
           const userData = userDoc.data();
+
+          // ✅ NOVO: Primeiro acesso para gestor (cria conta automaticamente)
+          if (userData.cargo === 'gestor') {
+            await createUserWithEmailAndPassword(auth, emailMontado, password);
+
+            await updateDoc(userRef, {
+              ultimo_login: serverTimestamp(),
+              email: emailMontado,
+            });
+
+            const sessionUser = {
+              ...userData,
+              login: loginInput,
+              email: emailMontado,
+              perfil: userData.perfil || 'gerente',
+              ultimo_login: new Date().toISOString(),
+            };
+
+            if (remember) {
+              localStorage.setItem('savedLogin', loginInput);
+              localStorage.setItem('savedPassword', password);
+              localStorage.setItem('rememberLogin', 'true');
+            } else {
+              localStorage.removeItem('savedLogin');
+              localStorage.removeItem('savedPassword');
+              localStorage.setItem('rememberLogin', 'false');
+            }
+
+            localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+            setUser(sessionUser);
+            return sessionUser;
+          }
+
+          // ❌ Para outros cargos que não paciente nem gestor
           if (userData.cargo !== 'paciente') {
             setError('Usuário não encontrado no sistema. Contate o administrador.');
             return;
           }
 
+          // Fluxo normal de paciente com código temporário
           if (password !== userData.codigo_temporario) {
             setError('Código temporário inválido!');
             return;
@@ -134,7 +172,6 @@ export function AuthProvider({ children }) {
             return;
           }
 
-          const emailMontado = `${loginInput.toLowerCase()}@tratamentoweb.com`;
           await createUserWithEmailAndPassword(auth, emailMontado, password);
 
           await updateDoc(userRef, {

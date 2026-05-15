@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
-import Loading from '../components/Loading';
-import logoImg from '../assets/logo.webp';
-import styles from './CadastrarPaciente.module.css';
+import Loading from '../../components/Loading';
+import logoImg from '../../assets/logo.webp';
+import styles from './CadastrarFuncionario.module.css';
 
-const CadastrarPaciente = () => {
+const CadastrarFuncionario = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -35,14 +35,15 @@ const CadastrarPaciente = () => {
   };
 
   const menuItems = [
-    { label: 'Cadastro de Pacientes', icon: '👤', action: () => setMenuOpen(false) },
+    { label: 'Cadastro de Pacientes', icon: '👤', action: () => { setMenuOpen(false); navigate('/cadastrar-paciente'); } },
+    { label: 'Cadastro de Funcionários', icon: '👥', action: () => setMenuOpen(false) },
     { label: 'Voltar ao Início', icon: '🏠', action: () => { setMenuOpen(false); navigate('/home'); } },
   ];
 
   if (loading) {
     return (
       <div className={styles.pageWrapper}>
-        <Loading message="Carregando cadastro..." />
+        <Loading message="Carregando cadastro de funcionários..." />
       </div>
     );
   }
@@ -76,14 +77,14 @@ const CadastrarPaciente = () => {
             <img src={logoImg} alt="ConectClin" className={styles.logo} />
           </div>
           <div className={styles.navCenter}>
-            <span className={styles.pageTitle}>Cadastro de Pacientes</span>
+            <span className={styles.pageTitle}>Cadastro de Funcionários</span>
           </div>
           <div className={styles.navRight}>
             <span className={styles.userInfo}>
               {user?.nome ? (() => {
                 const partes = user.nome.trim().split(' ');
                 return partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0];
-              })() : 'Usuário'} | {user?.cargo || 'Cargo'}
+              })() : 'Gerente'} | Gerente
             </span>
             <button onClick={handleLogout} className={styles.logoutBtn}>Sair</button>
           </div>
@@ -92,14 +93,17 @@ const CadastrarPaciente = () => {
         {/* Conteúdo placeholder */}
         <div className={styles.mainContent}>
           <div className={styles.header}>
-            <h2 className={styles.greeting}>Cadastro de Pacientes</h2>
+            <h2 className={styles.greeting}>Cadastro de Funcionários</h2>
+            <p className={styles.subtitle}>
+              Área exclusiva para gestores (Perfil Gerente). Cadastre novos profissionais e recepcionistas na plataforma.
+            </p>
           </div>
 
           <div className={styles.placeholderCard}>
-            <div className={styles.placeholderIcon}>👤</div>
+            <div className={styles.placeholderIcon}>👥</div>
             <h3 className={styles.placeholderTitle}>Em desenvolvimento</h3>
             <p className={styles.placeholderText}>
-              O formulário de cadastro de pacientes estará disponível em breve. Aqui você poderá registrar novos pacientes com todos os dados necessários para o acompanhamento.
+              O formulário de cadastro de funcionários estará disponível em breve. Aqui você poderá cadastrar nutricionistas, psicólogos e recepcionistas com todos os dados necessários.
             </p>
           </div>
         </div>
@@ -113,4 +117,4 @@ const CadastrarPaciente = () => {
   );
 };
 
-export default CadastrarPaciente;
+export default CadastrarFuncionario;
