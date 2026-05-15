@@ -17,8 +17,19 @@ const PacienteHome = lazy(() => import('./pages/paciente/PacienteHome'));
 function HomeRedirect() {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando sessão..." />;
-  if (!user) return <Navigate to="/" replace />; // Modal de login na landing
-  // Apenas profissionais têm acesso à nova home
+  if (!user) return <Navigate to="/" replace />;
+  
+  // Recepcionista vai direto para cadastro de pacientes
+  if (user.cargo === 'recepcionista') {
+    return <Navigate to="/cadastrar-paciente" replace />;
+  }
+  
+  // Paciente vai para home do paciente
+  if (user.cargo === 'paciente') {
+    return <Navigate to="/paciente/home" replace />;
+  }
+  
+  // Nutricionista e Psicólogo vão para home profissional
   return <Navigate to="/profissional/home" replace />;
 }
 
@@ -38,11 +49,13 @@ function ProtectedCadastroRoute() {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando sessão..." />;
   if (!user) return <Navigate to="/" replace />;
-  // Apenas Supervisor e Gerente podem cadastrar pacientes
-  if (user.cargo !== 'gerente' && user.perfil !== 'supervisor') {
-    return <Navigate to="/" replace />;
+  
+  // Recepcionista, Supervisor e Gerente podem acessar
+  if (user.cargo === 'recepcionista' || user.cargo === 'gerente' || user.perfil === 'supervisor') {
+    return <CadastrarPaciente />;
   }
-  return <CadastrarPaciente />;
+  
+  return <Navigate to="/" replace />;
 }
 
 // Componente que protege a rota da home do paciente

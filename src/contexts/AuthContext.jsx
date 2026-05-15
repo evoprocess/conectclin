@@ -16,7 +16,8 @@ import {
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-const CARGOS_VALIDOS = ['paciente', 'nutricionista', 'psicologo'];
+// ===== CORREÇÃO: adicionado 'recepcionista' =====
+const CARGOS_VALIDOS = ['paciente', 'nutricionista', 'psicologo', 'recepcionista'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -51,7 +52,6 @@ export function AuthProvider({ children }) {
     const emailMontado = `${loginInput.toLowerCase()}@tratamentoweb.com`;
 
     try {
-      // Tenta autenticar normalmente
       const userCredential = await signInWithEmailAndPassword(auth, emailMontado, password);
       const userRef = doc(db, 'logins', loginInput);
       const userDoc = await getDoc(userRef);
@@ -75,13 +75,10 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Se for paciente e NÃO tiver ultimo_login, significa que é o primeiro acesso
-      // (mas se chegou aqui é porque a senha já foi criada, então não deveria acontecer)
       const isPaciente = userData.cargo === 'paciente';
       const hasPrimeiroAcesso = userData.hasOwnProperty('ultimo_login');
 
       if (isPaciente && !hasPrimeiroAcesso) {
-        // Força a atualização do ultimo_login mesmo que tenha caído aqui
         await updateDoc(userRef, { ultimo_login: serverTimestamp() });
       } else {
         await updateDoc(userRef, { ultimo_login: serverTimestamp() });
@@ -108,11 +105,9 @@ export function AuthProvider({ children }) {
       setUser(sessionUser);
       return sessionUser;
     } catch (authError) {
-      // Tratamento de erros
       if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password') {
         setError('Login ou senha incorretos!');
       } else if (authError.code === 'auth/user-not-found') {
-        // ========== PRIMEIRO ACESSO ==========
         try {
           const userRef = doc(db, 'logins', loginInput);
           const userDoc = await getDoc(userRef);
@@ -128,7 +123,6 @@ export function AuthProvider({ children }) {
             return;
           }
 
-          // Valida o código temporário
           if (password !== userData.codigo_temporario) {
             setError('Código temporário inválido!');
             return;
@@ -140,11 +134,9 @@ export function AuthProvider({ children }) {
             return;
           }
 
-          // Cria a conta no Firebase Auth AUTOMATICAMENTE
           const emailMontado = `${loginInput.toLowerCase()}@tratamentoweb.com`;
           await createUserWithEmailAndPassword(auth, emailMontado, password);
 
-          // Atualiza o Firestore: remove código temporário e adiciona ultimo_login
           await updateDoc(userRef, {
             ultimo_login: serverTimestamp(),
             codigo_temporario: deleteField(),
@@ -152,7 +144,6 @@ export function AuthProvider({ children }) {
             email: emailMontado,
           });
 
-          // Sessão do usuário
           const sessionUser = {
             ...userData,
             login: loginInput,
