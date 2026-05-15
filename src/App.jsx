@@ -20,12 +20,12 @@ function HomeRedirect() {
   if (loading) return <Loading message="Verificando sessão..." />;
   if (!user) return <Navigate to="/" replace />;
 
-  // Gerente vai para home do profissional (painel de gestão)
-  if (user.cargo === 'gerente') {
-    return <Navigate to="/profissional/home" replace />;
+  // Gestor (perfil gerente) vai para cadastro de funcionários
+  if (user.cargo === 'gestor') {
+    return <Navigate to="/gerenciamento/cadastrar-funcionario" replace />;
   }
 
-  // Recepcionista vai direto para cadastro de pacientes
+  // Recepcionista vai para cadastro de pacientes
   if (user.cargo === 'recepcionista') {
     return <Navigate to="/cadastrar-paciente" replace />;
   }
@@ -81,7 +81,7 @@ function ProtectedGerenteRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando permissão..." />;
   if (!user) return <Navigate to="/" replace />;
-  if (user.cargo !== 'gerente') {
+  if (user.cargo !== 'gestor') {
     return <Navigate to="/" replace />;
   }
   return children;
