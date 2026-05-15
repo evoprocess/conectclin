@@ -9,6 +9,8 @@ import HomeGeral from './pages/HomeGeral'; // Landing page carregada sem lazy
 
 // ==================== LAZY LOADING ====================
 const ProfessionalHome = lazy(() => import('./pages/profissional/ProfessionalHome'));
+const CadastrarPaciente = lazy(() => import('./pages/CadastrarPaciente'));
+const PacienteHome = lazy(() => import('./pages/paciente/PacienteHome'));
 
 // ==================== COMPONENTES DE ROTA ====================
 
@@ -31,6 +33,30 @@ function ProtectedProfessionalRoute() {
   return <ProfessionalHome />;
 }
 
+// Componente que protege a rota de cadastro de pacientes
+function ProtectedCadastroRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <Loading message="Verificando sessão..." />;
+  if (!user) return <Navigate to="/" replace />;
+  // Apenas Supervisor e Gerente podem cadastrar pacientes
+  if (user.cargo !== 'gerente' && user.perfil !== 'supervisor') {
+    return <Navigate to="/" replace />;
+  }
+  return <CadastrarPaciente />;
+}
+
+// Componente que protege a rota da home do paciente
+function ProtectedPacienteRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <Loading message="Verificando sessão..." />;
+  if (!user) return <Navigate to="/" replace />;
+  // Apenas pacientes logados acessam sua home
+  if (user.cargo !== 'paciente') {
+    return <Navigate to="/" replace />;
+  }
+  return <PacienteHome />;
+}
+
 // ==================== APP PRINCIPAL ====================
 function App() {
   return (
@@ -46,6 +72,12 @@ function App() {
 
                 {/* Redirecionamento para home do usuário logado */}
                 <Route path="/home" element={<HomeRedirect />} />
+
+                {/* Cadastro de Pacientes (Supervisor/Gerente) */}
+                <Route path="/cadastrar-paciente" element={<ProtectedCadastroRoute />} />
+
+                {/* Home do Paciente (logado) */}
+                <Route path="/paciente/home" element={<ProtectedPacienteRoute />} />
 
                 {/* Home do Profissional */}
                 <Route path="/profissional/home" element={<ProtectedProfessionalRoute />} />
