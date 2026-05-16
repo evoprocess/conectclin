@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const emailMontado = `${loginInput.toLowerCase()}@tratamentoweb.com`;
+    const emailMontado = `${loginInput.toLowerCase()}@conectclin.com.br`;
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, emailMontado, password);
