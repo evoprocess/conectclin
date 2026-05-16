@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
-import Loading from '../components/Loading';
-import logoImg from '../assets/logo.webp';
+import Loading from '../../components/Loading';
+import logoImg from '../../assets/logo.webp';
 import styles from './CadastrarPaciente.module.css';
 
 const CadastrarPaciente = () => {
