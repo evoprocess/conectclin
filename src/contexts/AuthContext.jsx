@@ -87,7 +87,9 @@ export function AuthProvider({ children }) {
 
       console.log('✅ Info pública carregada');
 
-      // CORREÇÃO: atendimentos é um ÚNICO documento com maps dos profissionais
+      // ========== CORREÇÃO AQUI ==========
+      // atendimentos é um DOCUMENTO ÚNICO (não é coleção)
+      // Caminho: ORG_000/atendimentos (2 segmentos - PAR)
       const atendimentosRef = doc(db, orgId, 'atendimentos');
       const atendimentosSnap = await getDoc(atendimentosRef);
       
@@ -97,15 +99,16 @@ export function AuthProvider({ children }) {
         const todosAtendimentos = atendimentosSnap.data();
         const profissionaisIds = Object.keys(profissionaisVinculados || {});
         
-        console.log('📋 Profissionais vinculados ao login:', profissionaisIds);
+        console.log('📋 Profissionais vinculados:', profissionaisIds);
+        console.log('📋 Estrutura atendimentos:', Object.keys(todosAtendimentos));
         
         // Para cada profissional vinculado ao login
         for (const profissionalId of profissionaisIds) {
-          // Verifica se existe atendimentos para este profissional
+          // profissionalId é um CAMPO MAP dentro do documento atendimentos
           if (todosAtendimentos[profissionalId]) {
             const profissionalData = todosAtendimentos[profissionalId];
             
-            // Filtra apenas especialidades permitidas para este profissional
+            // Filtra apenas especialidades permitidas
             const especialidadesPermitidas = profissionaisVinculados[profissionalId]?.especialidades_permitidas || {};
             const dadosFiltrados = {};
             
