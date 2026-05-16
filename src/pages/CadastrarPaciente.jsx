@@ -10,7 +10,7 @@ const CadastrarPaciente = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { user, logout } = useAuth();
+  const { user, logout, orgInfo } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -74,6 +74,12 @@ const CadastrarPaciente = () => {
           <div className={styles.navLeft}>
             <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
             <img src={logoImg} alt="ConectClin" className={styles.logo} />
+            {/* NOME DA ORGANIZAÇÃO */}
+            {orgInfo?.nome_da_organizacao && (
+              <span className={styles.orgName}>
+                {orgInfo.nome_da_organizacao}
+              </span>
+            )}
           </div>
           <div className={styles.navCenter}>
             <span className={styles.pageTitle}>Cadastro de Pacientes</span>
@@ -83,18 +89,40 @@ const CadastrarPaciente = () => {
               {user?.nome ? (() => {
                 const partes = user.nome.trim().split(' ');
                 return partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0];
-              })() : 'Usuário'} | {user?.cargo || 'Cargo'}
+              })() : 'Usuário'} 
+              <span className={styles.userCargo}> | {user?.cargo || 'Cargo'}</span>
             </span>
             <button onClick={handleLogout} className={styles.logoutBtn}>Sair</button>
           </div>
         </nav>
 
-        {/* Conteúdo placeholder */}
+        {/* Conteúdo */}
         <div className={styles.mainContent}>
           <div className={styles.header}>
             <h2 className={styles.greeting}>Cadastro de Pacientes</h2>
+            <p className={styles.subtitle}>
+              {orgInfo?.nome_da_organizacao 
+                ? `${orgInfo.nome_da_organizacao} - Registre novos pacientes no sistema`
+                : 'Registre novos pacientes no sistema'
+              }
+            </p>
           </div>
 
+          {/* Card informativo */}
+          <div className={styles.infoCard}>
+            <div className={styles.infoIcon}>🏥</div>
+            <div className={styles.infoContent}>
+              <h3>Ambiente de Cadastro</h3>
+              <p>
+                {user?.cargo === 'recepcionista' 
+                  ? 'Como recepcionista, você pode cadastrar novos pacientes para a organização.'
+                  : 'Você está acessando a área de cadastro de pacientes.'
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Placeholder do formulário */}
           <div className={styles.placeholderCard}>
             <div className={styles.placeholderIcon}>👤</div>
             <h3 className={styles.placeholderTitle}>Em desenvolvimento</h3>
@@ -106,7 +134,7 @@ const CadastrarPaciente = () => {
 
         {/* Footer */}
         <footer className={styles.footer}>
-          <p>© 2026 ConectClin. Todos os direitos reservados.</p>
+          <p>© 2026 {orgInfo?.nome_da_organizacao || 'ConectClin'}. Todos os direitos reservados.</p>
         </footer>
       </div>
     </div>

@@ -10,7 +10,7 @@ const CadastrarFuncionario = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { user, logout } = useAuth();
+  const { user, logout, orgInfo } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -75,6 +75,12 @@ const CadastrarFuncionario = () => {
           <div className={styles.navLeft}>
             <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
             <img src={logoImg} alt="ConectClin" className={styles.logo} />
+            {/* NOME DA ORGANIZAÇÃO */}
+            {orgInfo?.nome_da_organizacao && (
+              <span className={styles.orgName}>
+                {orgInfo.nome_da_organizacao}
+              </span>
+            )}
           </div>
           <div className={styles.navCenter}>
             <span className={styles.pageTitle}>Cadastro de Funcionários</span>
@@ -84,21 +90,54 @@ const CadastrarFuncionario = () => {
               {user?.nome ? (() => {
                 const partes = user.nome.trim().split(' ');
                 return partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0];
-              })() : 'Gerente'} | Gerente
+              })() : 'Gerente'} 
+              <span className={styles.userCargo}> | Gerente</span>
             </span>
             <button onClick={handleLogout} className={styles.logoutBtn}>Sair</button>
           </div>
         </nav>
 
-        {/* Conteúdo placeholder */}
+        {/* Conteúdo */}
         <div className={styles.mainContent}>
           <div className={styles.header}>
             <h2 className={styles.greeting}>Cadastro de Funcionários</h2>
             <p className={styles.subtitle}>
-              Área exclusiva para gestores (Perfil Gerente). Cadastre novos profissionais e recepcionistas na plataforma.
+              {orgInfo?.nome_da_organizacao 
+                ? `${orgInfo.nome_da_organizacao} - Área exclusiva para gestores`
+                : 'Área exclusiva para gestores (Perfil Gerente)'
+              }
+            </p>
+            <p className={styles.subtitleSecondary}>
+              Cadastre novos profissionais e recepcionistas na plataforma.
             </p>
           </div>
 
+          {/* Cards de acesso rápido */}
+          <div className={styles.quickAccessGrid}>
+            <div className={styles.quickAccessCard} onClick={() => { setMenuOpen(false); navigate('/cadastrar-paciente'); }}>
+              <div className={styles.quickAccessIcon}>👤</div>
+              <h3>Cadastrar Paciente</h3>
+              <p>Registre novos pacientes no sistema</p>
+            </div>
+            <div className={`${styles.quickAccessCard} ${styles.quickAccessCardActive}`}>
+              <div className={styles.quickAccessIcon}>👥</div>
+              <h3>Cadastrar Funcionário</h3>
+              <p>Adicione profissionais e recepcionistas</p>
+            </div>
+          </div>
+
+          {/* Card informativo do gestor */}
+          <div className={styles.infoCard}>
+            <div className={styles.infoIcon}>👔</div>
+            <div className={styles.infoContent}>
+              <h3>Painel do Gestor</h3>
+              <p>
+                Como gestor de <strong>{orgInfo?.nome_da_organizacao || 'sua organização'}</strong>, você tem acesso ao cadastro de funcionários (nutricionistas, psicólogos, recepcionistas) e pacientes.
+              </p>
+            </div>
+          </div>
+
+          {/* Placeholder do formulário */}
           <div className={styles.placeholderCard}>
             <div className={styles.placeholderIcon}>👥</div>
             <h3 className={styles.placeholderTitle}>Em desenvolvimento</h3>
@@ -110,7 +149,7 @@ const CadastrarFuncionario = () => {
 
         {/* Footer */}
         <footer className={styles.footer}>
-          <p>© 2026 ConectClin. Todos os direitos reservados.</p>
+          <p>© 2026 {orgInfo?.nome_da_organizacao || 'ConectClin'}. Todos os direitos reservados.</p>
         </footer>
       </div>
     </div>

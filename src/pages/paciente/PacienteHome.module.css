@@ -556,3 +556,68 @@
     font-size: 2.5rem;
   }
 }
+
+/* Nome da Organização na Navbar */
+.orgName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a90e2;
+  margin-left: 12px;
+  padding: 4px 12px;
+  background: rgba(74, 144, 226, 0.1);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Cards de Resumo */
+.summaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.summaryCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #eef2f7;
+}
+
+.summaryCard strong {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  display: block;
+}
+
+.summaryCard p {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.summaryIcon {
+  font-size: 1.8rem;
+}
+
+/* Título da seção */
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 24px 0 16px;
+}
+
+/* Último atendimento no card */
+.lastAttendance {
+  display: block;
+  font-size: 0.75rem;
+  color: #7f8c8d;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}

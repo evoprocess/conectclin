@@ -53,8 +53,29 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // ========== Busca dados da organização ==========
-  const carregarDadosOrganizacao = async (orgId, login, profissionaisVinculados) => {
+  // ========== FUNÇÃO: Navegação por cargo ==========
+  const navegarPorCargo = (cargo, navigate) => {
+    switch (cargo) {
+      case 'paciente':
+        navigate('/paciente');
+        break;
+      case 'recepcionista':
+        navigate('/cadastrar-paciente');
+        break;
+      case 'gestor':
+        navigate('/gerenciamento');
+        break;
+      case 'nutricionista':
+      case 'psicologo':
+        navigate('/profissional');
+        break;
+      default:
+        navigate('/');
+    }
+  };
+
+  // ========== FUNÇÃO: Busca dados da organização ==========
+  const carregarDadosOrganizacao = async (orgId, login, cargo, profissionaisVinculados) => {
     try {
       console.log('🔐 PASSO 5: Verificando status da organização:', orgId);
       
@@ -74,10 +95,9 @@ export function AuthProvider({ children }) {
 
       console.log('✅ Organização ativa');
 
-      // PASSO 6: Busca info_pub e atendimentos vinculados
+      // PASSO 6: Busca info_pub
       console.log('🔐 PASSO 6: Carregando permissões...');
       
-      // Busca info_pub (documento completo)
       const orgInfoRef = doc(db, orgId, 'info_pub');
       const orgInfoSnap = await getDoc(orgInfoRef);
       
@@ -85,61 +105,108 @@ export function AuthProvider({ children }) {
         ? orgInfoSnap.data()
         : { nome_da_organizacao: 'Organização' };
 
-      console.log('✅ Info pública carregada');
+      console.log('✅ Info pública carregada:', orgInfoData.nome_da_organizacao);
 
-      // ========== CORREÇÃO AQUI ==========
-      // atendimentos é um DOCUMENTO ÚNICO (não é coleção)
-      // Caminho: ORG_000/atendimentos (2 segmentos - PAR)
-      const atendimentosRef = doc(db, orgId, 'atendimentos');
-      const atendimentosSnap = await getDoc(atendimentosRef);
+      let atendimentosData = {};
+      let profissionaisProcessados = {};
+
+      // ========== LÓGICA POR CARGO ==========
       
-      const atendimentosData = {};
-      
-      if (atendimentosSnap.exists()) {
-        const todosAtendimentos = atendimentosSnap.data();
-        const profissionaisIds = Object.keys(profissionaisVinculados || {});
+      if (cargo === 'paciente') {
+        // PACIENTE: Acessa atendimentos apenas dos profissionais vinculados
+        console.log('👤 PACIENTE - Carregando atendimentos vinculados');
         
-        console.log('📋 Profissionais vinculados:', profissionaisIds);
-        console.log('📋 Estrutura atendimentos:', Object.keys(todosAtendimentos));
+        const atendimentosRef = doc(db, orgId, 'atendimentos');
+        const atendimentosSnap = await getDoc(atendimentosRef);
         
-        // Para cada profissional vinculado ao login
-        for (const profissionalId of profissionaisIds) {
-          // profissionalId é um CAMPO MAP dentro do documento atendimentos
-          if (todosAtendimentos[profissionalId]) {
-            const profissionalData = todosAtendimentos[profissionalId];
-            
-            // Filtra apenas especialidades permitidas
-            const especialidadesPermitidas = profissionaisVinculados[profissionalId]?.especialidades_permitidas || {};
-            const dadosFiltrados = {};
-            
-            Object.keys(especialidadesPermitidas).forEach(especialidade => {
-              if (especialidadesPermitidas[especialidade] && profissionalData[especialidade]) {
-                const pacientesVinculados = profissionalData[especialidade]?.pacientes_vinculados || {};
-                
-                // Para paciente, filtra apenas os dados dele
-                if (pacientesVinculados[login]) {
-                  dadosFiltrados[especialidade] = {
-                    pacientes_vinculados: {
-                      [login]: pacientesVinculados[login]
-                    }
-                  };
+        if (atendimentosSnap.exists()) {
+          const todosAtendimentos = atendimentosSnap.data();
+          const profissionaisIds = Object.keys(profissionaisVinculados || {});
+          
+          console.log('📋 Profissionais vinculados:', profissionaisIds);
+          
+          for (const profissionalId of profissionaisIds) {
+            if (todosAtendimentos[profissionalId]) {
+              const profissionalData = todosAtendimentos[profissionalId];
+              const especialidadesPermitidas = profissionaisVinculados[profissionalId]?.especialidades_permitidas || {};
+              const dadosFiltrados = {};
+              
+              Object.keys(especialidadesPermitidas).forEach(especialidade => {
+                if (especialidadesPermitidas[especialidade] && profissionalData[especialidade]) {
+                  const pacientesVinculados = profissionalData[especialidade]?.pacientes_vinculados || {};
+                  
+                  if (pacientesVinculados[login]) {
+                    dadosFiltrados[especialidade] = {
+                      status: 'ativo',
+                      prontuario: pacientesVinculados[login].prontuario || {},
+                      profissional: {
+                        id: profissionalId,
+                        nome: profissionaisVinculados[profissionalId]?.nome || profissionalId
+                      }
+                    };
+                  }
                 }
+              });
+              
+              if (Object.keys(dadosFiltrados).length > 0) {
+                atendimentosData[profissionalId] = dadosFiltrados;
               }
-            });
-            
-            if (Object.keys(dadosFiltrados).length > 0) {
-              atendimentosData[profissionalId] = dadosFiltrados;
             }
           }
         }
+        
+        profissionaisProcessados = profissionaisVinculados || {};
+        
+      } else if (cargo === 'recepcionista') {
+        // RECEPCIONISTA: Ignora profissionais_vinculados, sem acesso a atendimentos
+        console.log('👨‍💼 RECEPCIONISTA - Acesso apenas para cadastro de pacientes');
+        atendimentosData = {};
+        profissionaisProcessados = {};
+        
+      } else if (cargo === 'gestor') {
+        // GESTOR: Ignora profissionais_vinculados, sem acesso a atendimentos
+        console.log('👔 GESTOR - Acesso para cadastro de funcionários e pacientes');
+        atendimentosData = {};
+        profissionaisProcessados = {};
+        
+      } else {
+        // PROFISSIONAL (nutricionista, psicologo, etc): Acessa apenas seus próprios atendimentos
+        console.log(`👨‍⚕️ PROFISSIONAL (${cargo}) - Carregando seus atendimentos`);
+        
+        const atendimentosRef = doc(db, orgId, 'atendimentos');
+        const atendimentosSnap = await getDoc(atendimentosRef);
+        
+        if (atendimentosSnap.exists()) {
+          const todosAtendimentos = atendimentosSnap.data();
+          
+          // O login do profissional é o próprio ID nos atendimentos
+          if (todosAtendimentos[login]) {
+            const meusAtendimentos = todosAtendimentos[login];
+            
+            // Pega todas as especialidades deste profissional
+            Object.keys(meusAtendimentos).forEach(especialidade => {
+              if (meusAtendimentos[especialidade]?.pacientes_vinculados) {
+                atendimentosData[especialidade] = {
+                  pacientes_vinculados: meusAtendimentos[especialidade].pacientes_vinculados
+                };
+              }
+            });
+          }
+        }
+        
+        profissionaisProcessados = {};
       }
 
-      console.log('✅ Atendimentos carregados:', Object.keys(atendimentosData));
+      console.log('✅ Dados carregados por cargo:', {
+        cargo,
+        atendimentos: Object.keys(atendimentosData),
+        profissionais: Object.keys(profissionaisProcessados)
+      });
 
       return {
         orgInfo: orgInfoData,
         atendimentosData,
-        profissionaisVinculados
+        profissionaisVinculados: profissionaisProcessados
       };
     } catch (error) {
       console.error('❌ Erro ao carregar organização:', error);
@@ -147,7 +214,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (loginInput, password, remember) => {
+  const login = async (loginInput, password, remember, navigate) => {
     setError(null);
     if (!loginInput || !password) {
       setError('Preencha todos os campos!');
@@ -200,6 +267,7 @@ export function AuthProvider({ children }) {
         orgData = await carregarDadosOrganizacao(
           organizationId, 
           loginInput, 
+          userData.cargo,
           userData.profissionais_vinculados
         );
       } catch (orgError) {
@@ -251,6 +319,12 @@ export function AuthProvider({ children }) {
       setAtendimentosData(orgData.atendimentosData);
       
       console.log('✅ LOGIN COMPLETO COM SUCESSO!');
+      
+      // Navegação por cargo
+      if (navigate) {
+        navegarPorCargo(userData.cargo, navigate);
+      }
+      
       return sessionUser;
       
     } catch (authError) {
@@ -285,6 +359,7 @@ export function AuthProvider({ children }) {
               orgData = await carregarDadosOrganizacao(
                 organizationId, 
                 loginInput, 
+                userData.cargo,
                 userData.profissionais_vinculados
               );
             } catch (orgError) {
@@ -328,6 +403,12 @@ export function AuthProvider({ children }) {
             setAtendimentosData(orgData.atendimentosData);
             
             console.log('✅ PRIMEIRO ACESSO GESTOR COMPLETO!');
+            
+            // Navegação por cargo
+            if (navigate) {
+              navegarPorCargo(userData.cargo, navigate);
+            }
+            
             return sessionUser;
           }
 
@@ -362,6 +443,7 @@ export function AuthProvider({ children }) {
             orgData = await carregarDadosOrganizacao(
               organizationId, 
               loginInput, 
+              userData.cargo,
               userData.profissionais_vinculados
             );
           } catch (orgError) {
@@ -407,6 +489,12 @@ export function AuthProvider({ children }) {
           setAtendimentosData(orgData.atendimentosData);
           
           console.log('✅ PRIMEIRO ACESSO PACIENTE COMPLETO!');
+          
+          // Navegação por cargo
+          if (navigate) {
+            navegarPorCargo(userData.cargo, navigate);
+          }
+          
           return sessionUser;
         } catch (e) {
           console.error('Erro no primeiro acesso:', e);

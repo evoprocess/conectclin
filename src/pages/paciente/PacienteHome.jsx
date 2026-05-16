@@ -11,7 +11,7 @@ const PacienteHome = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { user, logout } = useAuth();
+  const { user, logout, orgInfo, profissionaisVinculados, atendimentosData } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -35,17 +35,35 @@ const PacienteHome = () => {
     }
   };
 
-  // Dados mockados
-  const notifications = [
-    { id: 1, title: 'Plano Alimentar Atualizado', description: 'Seu nutricionista atualizou seu plano alimentar.', date: '2026-05-14' },
-    { id: 2, title: 'Nova Anamnese Disponível', description: 'Sua anamnese foi revisada pelo profissional.', date: '2026-05-13' },
-    { id: 3, title: 'Lembrete', description: 'Não se esqueça de registrar seu progresso semanal.', date: '2026-05-12' },
+  // Processa especialidades reais do Firestore
+  const especialidadesReais = [];
+  
+  Object.entries(atendimentosData || {}).forEach(([profissionalId, especialidades]) => {
+    Object.entries(especialidades).forEach(([especialidade, dados]) => {
+      const profissionalInfo = profissionaisVinculados?.[profissionalId] || {};
+      const ultimoProntuario = dados.prontuario 
+        ? Object.keys(dados.prontuario).sort().reverse()[0] 
+        : null;
+
+      especialidadesReais.push({
+        id: `${profissionalId}-${especialidade}`,
+        nome: especialidade.replace('_', ' '),
+        profissional: profissionalInfo.nome || profissionalId,
+        status: dados.status || 'ativo',
+        ultimoAtendimento: ultimoProntuario,
+        icone: mapearIcone(especialidade)
+      });
+    });
+  });
+
+  // Fallback para dados mockados se não houver dados reais
+  const specialties = especialidadesReais.length > 0 ? especialidadesReais : [
+    { id: 1, nome: 'Nutrição', icone: '🥗', desc: 'Acompanhamento nutricional personalizado', status: 'active', profissional: 'Nenhum' },
+    { id: 2, nome: 'Psicologia', icone: '🧠', desc: 'Apoio psicológico e avaliações', status: 'inactive', profissional: 'Nenhum' },
   ];
 
-  const specialties = [
-    { id: 1, name: 'Nutrição', icon: '🥗', desc: 'Acompanhamento nutricional personalizado', status: 'active' },
-    { id: 2, name: 'Psicologia', icon: '🧠', desc: 'Apoio psicológico e avaliações', status: 'inactive' },
-  ];
+  // Notificações baseadas em dados reais
+  const notifications = gerarNotificacoes(especialidadesReais, atendimentosData);
 
   const menuItems = [
     { label: 'Minhas Especialidades', icon: '⭐', action: () => setMenuOpen(false) },
@@ -89,6 +107,12 @@ const PacienteHome = () => {
           <div className={styles.navLeft}>
             <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
             <img src={logoImg} alt="ConectClin" className={styles.logo} />
+            {/* NOME DA ORGANIZAÇÃO */}
+            {orgInfo?.nome_da_organizacao && (
+              <span className={styles.orgName}>
+                {orgInfo.nome_da_organizacao}
+              </span>
+            )}
           </div>
           <div className={styles.navCenter}>
             <span className={styles.pageTitle}>Área do Paciente</span>
@@ -128,22 +152,63 @@ const PacienteHome = () => {
         {/* Conteúdo */}
         <div className={styles.mainContent}>
           <div className={styles.header}>
-            <h2 className={styles.greeting}>Bem-vindo(a), {user?.nome?.split(' ')[0] || 'Paciente'}!</h2>
+            <h2 className={styles.greeting}>
+              Bem-vindo(a), {user?.nome?.split(' ')[0] || 'Paciente'}!
+            </h2>
             <p className={styles.subtitle}>
-              Aqui você terá acesso a suas especialidades vinculadas e muito mais.
+              {orgInfo?.nome_da_organizacao 
+                ? `Você está conectado à ${orgInfo.nome_da_organizacao}`
+                : 'Aqui você terá acesso a suas especialidades vinculadas e muito mais.'
+              }
             </p>
           </div>
 
+          {/* Cards de resumo */}
+          <div className={styles.summaryCards}>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>👨‍⚕️</span>
+              <div>
+                <strong>{Object.keys(profissionaisVinculados || {}).length}</strong>
+                <p>Profissionais</p>
+              </div>
+            </div>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>🏥</span>
+              <div>
+                <strong>{especialidadesReais.length || specialties.length}</strong>
+                <p>Especialidades</p>
+              </div>
+            </div>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>📅</span>
+              <div>
+                <strong>{especialidadesReais.filter(e => e.ultimoAtendimento).length}</strong>
+                <p>Com prontuário</p>
+              </div>
+            </div>
+          </div>
+
           {/* Grid de especialidades */}
+          <h3 className={styles.sectionTitle}>Minhas Especialidades</h3>
           <div className={styles.specialtiesGrid}>
             {specialties.map(spec => (
               <div key={spec.id} className={styles.specialtyCard}>
-                <div className={styles.specialtyIcon}>{spec.icon}</div>
-                <h3 className={styles.specialtyName}>{spec.name}</h3>
-                <p className={styles.specialtyDesc}>{spec.desc}</p>
-                <span className={`${styles.specialtyStatus} ${spec.status === 'active' ? styles.statusActive : styles.statusInactive}`}>
-                  {spec.status === 'active' ? 'Ativo' : 'Inativo'}
+                <div className={styles.specialtyIcon}>{spec.icone}</div>
+                <h3 className={styles.specialtyName}>{spec.nome}</h3>
+                <p className={styles.specialtyDesc}>
+                  {especialidadesReais.length > 0 
+                    ? `Dr(a). ${spec.profissional}`
+                    : spec.desc
+                  }
+                </p>
+                <span className={`${styles.specialtyStatus} ${spec.status === 'active' || spec.status === 'ativo' ? styles.statusActive : styles.statusInactive}`}>
+                  {spec.status === 'active' || spec.status === 'ativo' ? 'Ativo' : 'Inativo'}
                 </span>
+                {spec.ultimoAtendimento && (
+                  <span className={styles.lastAttendance}>
+                    Último: {spec.ultimoAtendimento}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -151,11 +216,53 @@ const PacienteHome = () => {
 
         {/* Footer */}
         <footer className={styles.footer}>
-          <p>© 2026 ConectClin. Todos os direitos reservados.</p>
+          <p>© 2026 {orgInfo?.nome_da_organizacao || 'ConectClin'}. Todos os direitos reservados.</p>
         </footer>
       </div>
     </div>
   );
 };
+
+// Função auxiliar para mapear ícones por especialidade
+function mapearIcone(especialidade) {
+  const icones = {
+    'nutricionista': '🥗',
+    'psicologo': '🧠',
+    'cardiologista': '❤️',
+    'educador_fisico': '💪',
+    'fisioterapeuta': '🦴',
+    'nutrição': '🥗',
+    'psicologia': '🧠',
+    'cardiologia': '❤️',
+    'educação_física': '💪',
+    'fisioterapia': '🦴',
+  };
+  return icones[especialidade.toLowerCase()] || '🏥';
+}
+
+// Função para gerar notificações baseadas nos dados reais
+function gerarNotificacoes(especialidades, atendimentosData) {
+  const notificacoes = [];
+  
+  especialidades.forEach(esp => {
+    if (esp.ultimoAtendimento) {
+      notificacoes.push({
+        id: `pront-${esp.id}`,
+        title: `Prontuário Atualizado - ${esp.nome}`,
+        description: `Dr(a). ${esp.profissional} registrou novo prontuário.`,
+        date: esp.ultimoAtendimento
+      });
+    }
+  });
+
+  if (notificacoes.length === 0) {
+    return [
+      { id: 1, title: 'Bem-vindo(a)!', description: 'Explore suas especialidades vinculadas.', date: new Date().toISOString().split('T')[0] },
+      { id: 2, title: 'Dica', description: 'Mantenha seus dados atualizados para melhor atendimento.', date: new Date().toISOString().split('T')[0] },
+    ];
+  }
+
+  return notificacoes.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+}
 
 export default PacienteHome;

@@ -41,13 +41,13 @@ export function useLoginForm() {
   const handleLogin = useCallback(async (e) => {
     e.preventDefault();
     setLoadingBtn(true);
-    const result = await login(loginInput, password, remember);
+    const result = await login(loginInput, password, remember, navigate); // ← PASSE O NAVIGATE AQUI
     setLoadingBtn(false);
     if (result && !result.email) {
       setTempData(result);
       setTela('createPassword');
     }
-  }, [login, loginInput, password, remember]);
+  }, [login, loginInput, password, remember, navigate]);
 
   const handleCreatePassword = useCallback(async (e) => {
     e.preventDefault();
@@ -60,9 +60,9 @@ export function useLoginForm() {
       return;
     }
     setLoadingBtn(true);
-    await createPasswordAndLogin(tempData, newPassword);
+    await createPasswordAndLogin(tempData, newPassword, navigate); // ← PASSE O NAVIGATE AQUI TAMBÉM
     setLoadingBtn(false);
-  }, [newPassword, confirmPassword, tempData, createPasswordAndLogin, setError]);
+  }, [newPassword, confirmPassword, tempData, createPasswordAndLogin, setError, navigate]);
 
   // Limpa erro ao trocar de tela
   useEffect(() => {

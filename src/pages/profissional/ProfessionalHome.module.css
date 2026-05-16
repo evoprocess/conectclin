@@ -865,3 +865,80 @@
   background: #b91c1c;
   transform: translateY(-1px);
 }
+
+/* Nome da Organização na Navbar */
+.orgName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a90e2;
+  margin-left: 12px;
+  padding: 4px 12px;
+  background: rgba(74, 144, 226, 0.1);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Cargo do usuário */
+.userCargo {
+  text-transform: capitalize;
+  color: #7f8c8d;
+}
+
+/* Cards de Resumo */
+.summaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.summaryCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #eef2f7;
+}
+
+.summaryCard strong {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  display: block;
+}
+
+.summaryCard p {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.summaryIcon {
+  font-size: 1.8rem;
+}
+
+/* Lista de pacientes */
+.patientsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Badge em andamento */
+.emandamento {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .summaryCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .orgName {
+    display: none;
+  }
+}

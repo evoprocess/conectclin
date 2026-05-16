@@ -81,7 +81,7 @@ const ProfessionalHome = () => {
   const [activeModal, setActiveModal] = useState(null); // controla qual modal está aberto
   const [loading, setLoading] = useState(true);
 
-  const { user, logout } = useAuth();
+  const { user, logout, orgInfo, atendimentosData } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -105,13 +105,42 @@ const ProfessionalHome = () => {
       await logout();
       showToast('Logout realizado com sucesso', 'success');
       setActiveModal(null);
-      // O redirecionamento é feito pelo useEffect acima
     } catch (error) {
       showToast('Erro ao sair', 'error');
     }
   };
 
-  // Dados mockados
+  // Processa pacientes reais dos atendimentos
+  const pacientesReais = [];
+  
+  if (atendimentosData && Object.keys(atendimentosData).length > 0) {
+    Object.entries(atendimentosData).forEach(([especialidade, dados]) => {
+      if (dados.pacientes_vinculados) {
+        Object.entries(dados.pacientes_vinculados).forEach(([pacienteId, pacienteData]) => {
+          // Evita duplicar paciente se já estiver em múltiplas especialidades
+          if (!pacientesReais.find(p => p.id === pacienteId)) {
+            const ultimoProntuario = pacienteData.prontuario 
+              ? Object.keys(pacienteData.prontuario).sort().reverse()[0] 
+              : null;
+
+            pacientesReais.push({
+              id: pacienteId,
+              nome: pacienteId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              especialidade: especialidade.replace('_', ' '),
+              ultimoAtendimento: ultimoProntuario || 'Sem registro',
+              prontuario: pacienteData.prontuario || {}
+            });
+          }
+        });
+      }
+    });
+  }
+
+  // Contagem de pacientes reais
+  const totalPacientesReais = pacientesReais.length;
+  const totalEspecialidadesReais = Object.keys(atendimentosData || {}).length;
+
+  // Dados mockados (mantidos como estavam)
   const notifications = [
     { id: 1, title: 'Novo funcionário cadastrado', description: 'Dr. João Silva – Nutricionista Esportivo', date: '2026-05-10' },
     { id: 2, title: 'Atualização de especialização', description: 'Dra. Maria Souza concluiu Pós em Psicologia Clínica', date: '2026-05-12' },
@@ -179,6 +208,12 @@ const ProfessionalHome = () => {
           <div className={styles.navLeft}>
             <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
             <img src={logoImg} alt="ConectClin" className={styles.logo} />
+            {/* NOME DA ORGANIZAÇÃO */}
+            {orgInfo?.nome_da_organizacao && (
+              <span className={styles.orgName}>
+                {orgInfo.nome_da_organizacao}
+              </span>
+            )}
           </div>
           <div className={styles.navCenter}>
             <div className={styles.searchWrapper}>
@@ -208,8 +243,13 @@ const ProfessionalHome = () => {
                 </div>
               )}
             </div>
-            <span className={styles.userInfo}>{user?.nome ? (() => { const partes = user.nome.trim().split(' '); return partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0]; })() : 'Profissional'} | {user?.cargo || 'Cargo'}</span>
-            {/* Botão Sair agora abre o modal de confirmação */}
+            <span className={styles.userInfo}>
+              {user?.nome ? (() => { 
+                const partes = user.nome.trim().split(' '); 
+                return partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0]; 
+              })() : 'Profissional'} 
+              <span className={styles.userCargo}> | {user?.cargo || 'Cargo'}</span>
+            </span>
             <button onClick={() => setActiveModal('logout')} className={styles.logoutBtn}>Sair</button>
           </div>
         </nav>
@@ -217,8 +257,68 @@ const ProfessionalHome = () => {
         <div className={styles.mainContent}>
           <div className={styles.header}>
             <h2 className={styles.greeting}>Bem-vindo(a), {user?.nome?.split(' ')[0] || 'Profissional'}!</h2>
-            <p className={styles.subtitle}>Painel do profissional de saúde</p>
+            <p className={styles.subtitle}>
+              {orgInfo?.nome_da_organizacao 
+                ? `Painel do profissional - ${orgInfo.nome_da_organizacao}`
+                : 'Painel do profissional de saúde'
+              }
+            </p>
           </div>
+
+          {/* Cards de resumo com dados reais + mockados */}
+          <div className={styles.summaryCards}>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>👥</span>
+              <div>
+                <strong>{totalPacientesReais > 0 ? totalPacientesReais : acompanhamentos.length}</strong>
+                <p>Pacientes Vinculados</p>
+              </div>
+            </div>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>🏥</span>
+              <div>
+                <strong>{totalEspecialidadesReais > 0 ? totalEspecialidadesReais : '2'}</strong>
+                <p>Especialidades</p>
+              </div>
+            </div>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>📅</span>
+              <div>
+                <strong>{consultasHoje.length}</strong>
+                <p>Consultas Hoje</p>
+              </div>
+            </div>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryIcon}>⏳</span>
+              <div>
+                <strong>{pendentesCount}</strong>
+                <p>Pendências</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista de pacientes reais (se existirem) */}
+          {pacientesReais.length > 0 && (
+            <div className={styles.dashboardCard}>
+              <h3 className={styles.dashboardCardTitle}>👥 Meus Pacientes Vinculados</h3>
+              <div className={styles.patientsList}>
+                {pacientesReais.map(paciente => (
+                  <div key={paciente.id} className={styles.patientCard}>
+                    <div className={styles.patientAvatar}>{paciente.nome.charAt(0)}</div>
+                    <div className={styles.patientInfo}>
+                      <div className={styles.patientName}>{paciente.nome}</div>
+                      <div className={styles.patientLastUpdate}>
+                        {paciente.especialidade} • Último: {paciente.ultimoAtendimento}
+                      </div>
+                    </div>
+                    <span className={`${styles.statusBadge} ${styles.emandamento}`}>
+                      {paciente.ultimoAtendimento !== 'Sem registro' ? 'Em andamento' : 'Pendente'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className={styles.quickActions}>
             <button className={styles.actionBtn} onClick={() => setActiveModal('consulta')}><span className={styles.actionIcon}>➕</span> Nova Consulta</button>
@@ -265,7 +365,7 @@ const ProfessionalHome = () => {
         </div>
 
         <footer className={styles.footer}>
-          <p>© 2026 ConectClin. Todos os direitos reservados.</p>
+          <p>© 2026 {orgInfo?.nome_da_organizacao || 'ConectClin'}. Todos os direitos reservados.</p>
         </footer>
       </div>
 

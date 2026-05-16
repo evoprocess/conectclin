@@ -358,3 +358,78 @@
     max-width: 1000px;
   }
 }
+
+/* Nome da Organização na Navbar */
+.orgName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a90e2;
+  margin-left: 12px;
+  padding: 4px 12px;
+  background: rgba(74, 144, 226, 0.1);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Cargo do usuário */
+.userCargo {
+  text-transform: capitalize;
+  color: #7f8c8d;
+}
+
+/* Subtítulo */
+.subtitle {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin-top: 8px;
+}
+
+/* Card informativo */
+.infoCard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 24px 0;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.infoIcon {
+  font-size: 3rem;
+  background: rgba(255, 255, 255, 0.2);
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.infoContent h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.infoContent p {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .infoCard {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .orgName {
+    display: none;
+  }
+}
