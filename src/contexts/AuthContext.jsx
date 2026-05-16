@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // ========== NOVA FUNÇÃO: Busca dados da organização ==========
+  // ========== Busca dados da organização ==========
   const carregarDadosOrganizacao = async (orgId, login, profissionaisVinculados) => {
     try {
       console.log('🔐 PASSO 5: Verificando status da organização:', orgId);
@@ -87,19 +87,25 @@ export function AuthProvider({ children }) {
 
       console.log('✅ Info pública carregada');
 
-      // Busca atendimentos apenas dos profissionais vinculados
-      const profissionaisIds = Object.keys(profissionaisVinculados || {});
+      // CORREÇÃO: atendimentos é um ÚNICO documento com maps dos profissionais
+      const atendimentosRef = doc(db, orgId, 'atendimentos');
+      const atendimentosSnap = await getDoc(atendimentosRef);
+      
       const atendimentosData = {};
       
-      if (profissionaisIds.length > 0) {
+      if (atendimentosSnap.exists()) {
+        const todosAtendimentos = atendimentosSnap.data();
+        const profissionaisIds = Object.keys(profissionaisVinculados || {});
+        
+        console.log('📋 Profissionais vinculados ao login:', profissionaisIds);
+        
+        // Para cada profissional vinculado ao login
         for (const profissionalId of profissionaisIds) {
-          const atendimentosRef = doc(db, orgId, 'atendimentos', profissionalId);
-          const atendimentosSnap = await getDoc(atendimentosRef);
-          
-          if (atendimentosSnap.exists()) {
-            const profissionalData = atendimentosSnap.data();
+          // Verifica se existe atendimentos para este profissional
+          if (todosAtendimentos[profissionalId]) {
+            const profissionalData = todosAtendimentos[profissionalId];
             
-            // Filtra apenas especialidades permitidas
+            // Filtra apenas especialidades permitidas para este profissional
             const especialidadesPermitidas = profissionaisVinculados[profissionalId]?.especialidades_permitidas || {};
             const dadosFiltrados = {};
             
@@ -125,7 +131,7 @@ export function AuthProvider({ children }) {
         }
       }
 
-      console.log('✅ Atendimentos carregados');
+      console.log('✅ Atendimentos carregados:', Object.keys(atendimentosData));
 
       return {
         orgInfo: orgInfoData,
