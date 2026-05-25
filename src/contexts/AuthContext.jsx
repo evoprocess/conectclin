@@ -328,6 +328,8 @@ export function AuthProvider({ children }) {
       return sessionUser;
       
     } catch (authError) {
+      console.error('🔥 CÓDIGO DO ERRO:', authError.code);
+      console.error('🔥 MENSAGEM DO ERRO:', authError.message);
       if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password') {
         setError('Login ou senha incorretos!');
       } else if (authError.code === 'auth/user-not-found') {
@@ -511,6 +513,7 @@ export function AuthProvider({ children }) {
       } else if (authError.message.includes('permissions')) {
         setError('Erro de permissão no banco de dados. Contate o administrador.');
       } else {
+        console.error('🔥 ERRO DESCONHECIDO NO LOGIN:', authError.code, authError.message);
         setError('Erro: ' + authError.message);
       }
     }
