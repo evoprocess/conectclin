@@ -17,7 +17,7 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 // ===== CARGOS VÁLIDOS (inclui gestor) =====
-const CARGOS_VALIDOS = ['paciente', 'nutricionista', 'psicologo', 'recepcionista', 'gestor'];
+const CARGOS_VALIDOS = ['paciente', 'profissional', 'recepcionista', 'gestor'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
