@@ -36,6 +36,12 @@ export function AuthProvider({ children }) {
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
+        
+        // ✅ Converte cargos antigos para 'profissional'
+        if (parsed.cargo === 'nutricionista' || parsed.cargo === 'psicologo') {
+          parsed.cargo = 'profissional';
+        }
+        
         if (CARGOS_VALIDOS.includes(parsed.cargo)) {
           setUser(parsed);
           // Recupera dados da organização salvos
@@ -341,10 +347,17 @@ export function AuthProvider({ children }) {
           }
 
           const userData = userDoc.data();
+          
+          // ✅ Valida cargo ANTES de qualquer ação
+          if (!CARGOS_VALIDOS.includes(userData.cargo)) {
+            setError(`Cargo inválido: ${userData.cargo}`);
+            return;
+          }
+          
           const organizationId = userData.org;
 
-          // ✅ Primeiro acesso para gestor (cria conta automaticamente)
-          if (userData.cargo === 'gestor') {
+          // ✅ Primeiro acesso para gestor OU profissional (cria conta automaticamente)
+          if (userData.cargo === 'gestor' || userData.cargo === 'profissional') {
             await createUserWithEmailAndPassword(auth, emailMontado, password);
 
             // Carrega dados da organização
@@ -380,7 +393,7 @@ export function AuthProvider({ children }) {
               orgInfo: orgData.orgInfo,
               profissionaisVinculados: orgData.profissionaisVinculados,
               atendimentosData: orgData.atendimentosData,
-              perfil: userData.perfil || 'gerente',
+              perfil: userData.perfil || (userData.cargo === 'gestor' ? 'gerente' : 'supervisor'),
               ultimo_login: new Date().toISOString(),
             };
 
@@ -401,7 +414,7 @@ export function AuthProvider({ children }) {
             setProfissionaisVinculados(orgData.profissionaisVinculados);
             setAtendimentosData(orgData.atendimentosData);
             
-            console.log('✅ PRIMEIRO ACESSO GESTOR COMPLETO!');
+            console.log(`✅ PRIMEIRO ACESSO ${userData.cargo.toUpperCase()} COMPLETO!`);
             
             // Navegação por cargo
             if (navigate) {
@@ -411,9 +424,9 @@ export function AuthProvider({ children }) {
             return sessionUser;
           }
 
-          // ❌ Para outros cargos que não paciente nem gestor
+          // ❌ Para outros cargos que não paciente
           if (userData.cargo !== 'paciente') {
-            setError('Usuário não encontrado no sistema. Contate o administrador.');
+            setError('Primeiro acesso não disponível para este tipo de usuário.');
             return;
           }
 
