@@ -16,7 +16,7 @@ import {
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-// ===== CARGOS VÁLIDOS (inclui gestor) =====
+// ===== CARGOS VÁLIDOS =====
 const CARGOS_VALIDOS = ['paciente', 'profissional', 'recepcionista', 'gestor'];
 
 export function AuthProvider({ children }) {
@@ -36,12 +36,6 @@ export function AuthProvider({ children }) {
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        
-        // ✅ Converte cargos antigos para 'profissional'
-        if (parsed.cargo === 'nutricionista' || parsed.cargo === 'psicologo') {
-          parsed.cargo = 'profissional';
-        }
-        
         if (CARGOS_VALIDOS.includes(parsed.cargo)) {
           setUser(parsed);
           // Recupera dados da organização salvos
