@@ -239,6 +239,7 @@ export function AuthProvider({ children }) {
       }
 
       const userData = userDoc.data();
+      console.log('🔍 CARGO DO USUÁRIO:', userData.cargo, '| Tipo:', typeof userData.cargo);
       
       if (userData.status_ativo === false) {
         await signOut(auth);
@@ -341,6 +342,7 @@ export function AuthProvider({ children }) {
           }
 
           const userData = userDoc.data();
+          console.log('🔍 deu erro no auth - CARGO DO USUÁRIO:', userData.cargo, '| Tipo:', typeof userData.cargo);
           
           // ✅ Valida cargo ANTES de qualquer ação
           if (!CARGOS_VALIDOS.includes(userData.cargo)) {
