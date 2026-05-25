@@ -39,7 +39,7 @@ Desde o início da migração, evoluímos o sistema com as seguintes entregas:
 ## 📘 Documentação do TratamentoWeb – Versão React (ATUALIZADA)
 
 ### 1. Visão Geral
-O **TratamentoWeb** é uma plataforma integrada para nutricionistas, psicólogos e pacientes. Permite o gerenciamento de avaliações, planos alimentares, anamneses, cálculo energético, gamificação (shopping nutri) e acompanhamento psicológico. A versão atual foi migrada de JavaScript vanilla para **React com Vite**, mantendo a mesma identidade visual e funcionalidades.
+O **TratamentoWeb** é uma plataforma integrada para profissionais de saúde e pacientes. Permite o gerenciamento de avaliações, planos alimentares, anamneses, cálculo energético, gamificação (shopping nutri) e acompanhamento psicológico. A versão atual foi migrada de JavaScript vanilla para **React com Vite**, mantendo a mesma identidade visual e funcionalidades.
 
 ### 2. Stack Tecnológica
 - **React 18** com Hooks e Context API

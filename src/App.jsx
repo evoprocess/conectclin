@@ -35,7 +35,7 @@ function HomeRedirect() {
     return <Navigate to="/paciente/home" replace />;
   }
 
-  // Nutricionista e Psicólogo vão para home profissional
+  // Profissionais de saúde vão para home profissional
   return <Navigate to="/profissional/home" replace />;
 }
 
@@ -44,7 +44,7 @@ function ProtectedProfessionalRoute() {
   const { user, loading } = useAuth();
   if (loading) return <Loading message="Verificando sessão..." />;
   if (!user) return <Navigate to="/" replace />;
-  if (user.cargo !== 'nutricionista' && user.cargo !== 'psicologo' && user.cargo !== 'gerente') {
+  if (user.cargo !== 'profissional') {
     return <Navigate to="/" replace />;
   }
   return <ProfessionalHome />;
@@ -57,7 +57,7 @@ function ProtectedCadastroRoute() {
   if (!user) return <Navigate to="/" replace />;
 
   // Recepcionista, Supervisor e Gerente podem acessar
-  if (user.cargo === 'recepcionista' || user.cargo === 'gerente' || user.perfil === 'supervisor') {
+  if (user.cargo === 'recepcionista' || user.perfil === 'gerente' || user.perfil === 'supervisor') {
     return <CadastrarPaciente />;
   }
 

@@ -65,8 +65,7 @@ export function AuthProvider({ children }) {
       case 'gestor':
         navigate('/gerenciamento');
         break;
-      case 'nutricionista':
-      case 'psicologo':
+      case 'profissional':
         navigate('/profissional');
         break;
       default:
@@ -170,7 +169,7 @@ export function AuthProvider({ children }) {
         profissionaisProcessados = {};
         
       } else {
-        // PROFISSIONAL (nutricionista, psicologo, etc): Acessa apenas seus próprios atendimentos
+        // PROFISSIONAL (profissionais de saúde): Acessa apenas seus próprios atendimentos
         console.log(`👨‍⚕️ PROFISSIONAL (${cargo}) - Carregando seus atendimentos`);
         
         const atendimentosRef = doc(db, orgId, 'atendimentos');

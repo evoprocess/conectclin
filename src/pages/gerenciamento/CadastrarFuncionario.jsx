@@ -132,7 +132,7 @@ const CadastrarFuncionario = () => {
             <div className={styles.infoContent}>
               <h3>Painel do Gestor</h3>
               <p>
-                Como gestor de <strong>{orgInfo?.nome_da_organizacao || 'sua organização'}</strong>, você tem acesso ao cadastro de funcionários (nutricionistas, psicólogos, recepcionistas) e pacientes.
+                Como gestor de <strong>{orgInfo?.nome_da_organizacao || 'sua organização'}</strong>, você tem acesso ao cadastro de funcionários e pacientes.
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ const CadastrarFuncionario = () => {
             <div className={styles.placeholderIcon}>👥</div>
             <h3 className={styles.placeholderTitle}>Em desenvolvimento</h3>
             <p className={styles.placeholderText}>
-              O formulário de cadastro de funcionários estará disponível em breve. Aqui você poderá cadastrar nutricionistas, psicólogos e recepcionistas com todos os dados necessários.
+              O formulário de cadastro de funcionários estará disponível em breve. Aqui você poderá cadastrar profissionais de saúde e recepcionistas com todos os dados necessários.
             </p>
           </div>
         </div>
